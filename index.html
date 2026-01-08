@@ -389,6 +389,7 @@
             <thead>
               <tr>
                 <th style="width:220px">客戶名稱</th>
+                <th style="width:140px">負責業務</th>
                 <th style="width:160px">產品名稱</th>
                 <th style="width:240px">維護期間</th>
                 <th>預定維護月份</th>
@@ -677,6 +678,19 @@ await fetch(API_URL, {
   const listWrap = document.getElementById("listWrap");
   const calendarWrap = document.getElementById("calendarWrap");
   const calGrid = document.getElementById("calGrid");
+  const salesDoneToggleWrap = document.getElementById("salesDoneToggleWrap");
+  const salesDoneToggle = document.getElementById("salesDoneToggle");
+
+  // 業務專屬頁面才顯示開關
+  if (OWNER_LOCK) {
+    salesDoneToggleWrap.style.display = "inline-flex";
+  }
+
+  salesDoneToggle.addEventListener("change", () => {
+    showDoneForSales = salesDoneToggle.checked;
+    render(); // 你原本用來重繪清單/行事曆的函式
+  });
+
 
   // edit refs
   const editTitle = document.getElementById("editTitle");
@@ -696,6 +710,11 @@ const quill = new Quill(notesEditorEl, {
       [{ list: "ordered" }, { list: "bullet" }],
       ["link"],
       ["clean"]
+      <label id="salesDoneToggleWrap" style="display:none;align-items:center;gap:6px;white-space:nowrap;">
+  <input type="checkbox" id="salesDoneToggle" checked>
+  顯示已完工
+</label>
+
     ]
   }
 });
@@ -773,9 +792,12 @@ startEl.addEventListener("change", () => {
   let editingYMList = [];
   let modalCtx = null;
   let endDateManuallyEdited = false;
+  let showDoneForSales = true; // 業務端：是否顯示已完工（預設顯示）
+
     // ===== 業務分流（方案二：每位業務專屬網址）=====
   const OWNER = (new URLSearchParams(location.search).get("owner") || "").trim();
   const OWNER_LOCK = !!OWNER; // 有 owner 代表是「業務專屬網址」
+  
 
 
   function curYM(){
@@ -860,11 +882,12 @@ startEl.addEventListener("change", () => {
     
     if(mode === "eng" && engView === "cal") renderCalendar(list);
 
-    rowsEl.innerHTML = list.length ? "" : `<tr><td colspan="7" class="small">無符合條件資料。</td></tr>`;
+    rowsEl.innerHTML = list.length ? "" : `<tr><td colspan="8" class="small">無符合條件資料。</td></tr>`;
     list.forEach(r => {
       rowsEl.insertAdjacentHTML("beforeend", `
         <tr>
           <td><div style="font-weight:800">${esc(r.customer)}</div></td>
+          <td>${esc(r.owner || "-")}</td>
           <td>${esc(r.product)}</td>
           <td class="mono">${esc(r.startDate)} ~ ${esc(r.endDate)}</td>
           <td>${renderPlannedMonths(r, ymStr)}</td>
@@ -929,7 +952,7 @@ startEl.addEventListener("change", () => {
               <div class="dot ${dotCls}" style="margin-top:3px"></div>
               <div>
                 <div class="taskTitle">${esc(r.customer)}</div>
-                <div class="taskSub">${esc(r.product)}｜${sch.isDone ? "已完工" : "未完工"}</div>
+                <div class="taskSub">${esc(r.product)}｜負責業務 ${esc(r.owner || "-")}｜${sch.isDone ? "已完工" : "未完工"}</div>
               </div>
             </div>
           `);
@@ -985,8 +1008,10 @@ startEl.addEventListener("change", () => {
       const sch = findSchedule(r, ymStr);
       if(scope.value === "need" && !sch) return false;
       if(scope.value === "none" && sch) return false;
-      if(doneFilter.value === "todo" && (!sch || sch.isDone)) return false;
-      if(doneFilter.value === "done" && (!sch || !sch.isDone)) return false;
+      if (!OWNER_LOCK) {
+  if(doneFilter.value === "todo" && (!sch || sch.isDone)) return false;
+  if(doneFilter.value === "done" && (!sch || !sch.isDone)) return false;
+}
       return true;
     }).sort((a,b)=> (a.customer||"").localeCompare(b.customer||""));
   }
@@ -1257,6 +1282,7 @@ btnClear.addEventListener("click", async () => {
 
 </body>
 </html>
+
 
 
 
