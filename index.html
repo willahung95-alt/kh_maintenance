@@ -422,7 +422,7 @@
   </section>
 
   <!-- EDIT -->
-  <section id="routeEdit" class="card">
+  <section id="routeEdit" class="card" style="display:none">
     <div class="hd">
       <h2 id="editTitle">新增/編輯維護</h2>
       <div class="row">
@@ -679,17 +679,22 @@ await fetch(API_URL, {
   const calendarWrap = document.getElementById("calendarWrap");
   const calGrid = document.getElementById("calGrid");
   const salesDoneToggleWrap = document.getElementById("salesDoneToggleWrap");
-  const salesDoneToggle = document.getElementById("salesDoneToggle");
+const salesDoneToggle = document.getElementById("salesDoneToggle");
 
-  // 業務專屬頁面才顯示開關
+// 這兩個元素不存在就不要做任何事，避免整支 JS 中斷造成跑版
+if (salesDoneToggleWrap && salesDoneToggle) {
   if (OWNER_LOCK) {
     salesDoneToggleWrap.style.display = "inline-flex";
+  } else {
+    salesDoneToggleWrap.style.display = "none";
   }
 
   salesDoneToggle.addEventListener("change", () => {
     showDoneForSales = salesDoneToggle.checked;
-    render(); // 你原本用來重繪清單/行事曆的函式
+    render(); // 如果你是 refresh()/renderHome()，改成你實際的重繪函式
   });
+}
+
 
 
   // edit refs
@@ -1282,6 +1287,7 @@ btnClear.addEventListener("click", async () => {
 
 </body>
 </html>
+
 
 
 
