@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>客戶維護管理（v5.260107）</title>
+  <title>客戶維護管理（v5.2601061550）</title>
   <style>
     :root{
       --bg:#f6f7fb;
@@ -188,6 +188,9 @@
     .mchip.done .d{background: var(--good)}
     .mchip.todo{border-color: rgba(247,144,9,.25); background: rgba(247,144,9,.07);}
     .mchip.todo .d{background: var(--warn)}
+
+    .mchip.currenttodo{border-color: rgba(240,68,56,.25); background: rgba(240,68,56,.08);}
+    .mchip.currenttodo .d{background: var(--bad)}
     .mchip.selected{outline: 2px solid rgba(45,108,223,.20);}
 
     .link{color: var(--accent); text-decoration: underline; cursor:pointer}
@@ -338,7 +341,7 @@
 <body>
 <header>
   <div class="title">
-    <h1>客戶維護管理（v5.260107）</h1>
+    <h1>客戶維護管理（v5.2601061550）</h1>
     <p>管理端：新增/編輯維護排程。工程師端：可選「清單 / 行事曆」檢視，直接設定完工。</p>
   </div>
 
@@ -422,7 +425,7 @@
   </section>
 
   <!-- EDIT -->
-  <section id="routeEdit" class="card" style="display:none">
+  <section id="routeEdit" class="card">
     <div class="hd">
       <h2 id="editTitle">新增/編輯維護</h2>
       <div class="row">
@@ -446,9 +449,23 @@
               <option value="km+"></option>
               <option value="tms+"></option>
               <option value="Adobe Connect"></option>
+              <option value="i-reporter"></option>
             </datalist>
           </div>
         </div>
+
+        <div class="grid two" style="margin-top:10px">
+          <div>
+            <label>負責業務</label>
+            <select id="sales" required>
+              <option value="willa">willa</option>
+              <option value="melissa">melissa</option>
+              <option value="Anita">Anita</option>
+            </select>
+          </div>
+          <div></div>
+        </div>
+
 
         <div class="grid two" style="margin-top:10px">
           <div>
@@ -579,6 +596,7 @@
       records = (Array.isArray(data) ? data : []).map(r => ({
   id: r.id || "",
   customer: r.customer || "",
+  sales: r.sales || r.owner || "",
   product: r.product || "",
   startDate: r.startDate || "",
   endDate: r.endDate || "",
@@ -608,6 +626,7 @@
       const payload = records.map(r => ({
   id: r.id || "",
   customer: r.customer || "",
+  sales: r.sales || r.owner || "",
   product: r.product || "",
   startDate: r.startDate || "",
   endDate: r.endDate || "",
@@ -678,24 +697,6 @@ await fetch(API_URL, {
   const listWrap = document.getElementById("listWrap");
   const calendarWrap = document.getElementById("calendarWrap");
   const calGrid = document.getElementById("calGrid");
-  const salesDoneToggleWrap = document.getElementById("salesDoneToggleWrap");
-const salesDoneToggle = document.getElementById("salesDoneToggle");
-
-// 這兩個元素不存在就不要做任何事，避免整支 JS 中斷造成跑版
-if (salesDoneToggleWrap && salesDoneToggle) {
-  if (OWNER_LOCK) {
-    salesDoneToggleWrap.style.display = "inline-flex";
-  } else {
-    salesDoneToggleWrap.style.display = "none";
-  }
-
-  salesDoneToggle.addEventListener("change", () => {
-    showDoneForSales = salesDoneToggle.checked;
-    render(); // 如果你是 refresh()/renderHome()，改成你實際的重繪函式
-  });
-}
-
-
 
   // edit refs
   const editTitle = document.getElementById("editTitle");
@@ -703,6 +704,7 @@ if (salesDoneToggleWrap && salesDoneToggle) {
   const formEdit = document.getElementById("formEdit");
   const customerEl = document.getElementById("customer");
   const productEl = document.getElementById("product");
+  const salesEl = document.getElementById("sales");
   const startEl = document.getElementById("startDate");
   const endEl = document.getElementById("endDate");
   const notesEditorEl = document.getElementById("notesEditor");
@@ -715,11 +717,6 @@ const quill = new Quill(notesEditorEl, {
       [{ list: "ordered" }, { list: "bullet" }],
       ["link"],
       ["clean"]
-      <label id="salesDoneToggleWrap" style="display:none;align-items:center;gap:6px;white-space:nowrap;">
-  <input type="checkbox" id="salesDoneToggle" checked>
-  顯示已完工
-</label>
-
     ]
   }
 });
@@ -797,13 +794,6 @@ startEl.addEventListener("change", () => {
   let editingYMList = [];
   let modalCtx = null;
   let endDateManuallyEdited = false;
-  let showDoneForSales = true; // 業務端：是否顯示已完工（預設顯示）
-
-    // ===== 業務分流（方案二：每位業務專屬網址）=====
-  const OWNER = (new URLSearchParams(location.search).get("owner") || "").trim();
-  const OWNER_LOCK = !!OWNER; // 有 owner 代表是「業務專屬網址」
-  
-
 
   function curYM(){
     const d = new Date();
@@ -854,10 +844,6 @@ startEl.addEventListener("change", () => {
 　　btnClear.style.display = (mode === "admin") ? "inline-flex" : "none";
     const b = e.target.closest("button[data-mode]");
     if(!b) return;
-    if (OWNER_LOCK && b.dataset.mode === "eng") {
-      alert("此網址為業務專屬頁面，請使用工程師專用網址進入工程師端。");
-      return;
-    }
     mode = b.dataset.mode;
     Array.from(modeSeg.querySelectorAll("button")).forEach(x => x.classList.toggle("active", x === b));
     if(mode === "eng"){
@@ -892,7 +878,7 @@ startEl.addEventListener("change", () => {
       rowsEl.insertAdjacentHTML("beforeend", `
         <tr>
           <td><div style="font-weight:800">${esc(r.customer)}</div></td>
-          <td>${esc(r.owner || "-")}</td>
+          <td>${esc(r.sales || r.owner || "-")}</td>
           <td>${esc(r.product)}</td>
           <td class="mono">${esc(r.startDate)} ~ ${esc(r.endDate)}</td>
           <td>${renderPlannedMonths(r, ymStr)}</td>
@@ -957,7 +943,7 @@ startEl.addEventListener("change", () => {
               <div class="dot ${dotCls}" style="margin-top:3px"></div>
               <div>
                 <div class="taskTitle">${esc(r.customer)}</div>
-                <div class="taskSub">${esc(r.product)}｜負責業務 ${esc(r.owner || "-")}｜${sch.isDone ? "已完工" : "未完工"}</div>
+                <div class="taskSub">${esc(r.product)}｜業務 ${esc(r.sales || r.owner || "-")}｜${sch.isDone ? "已完工" : "未完工"}</div>
               </div>
             </div>
           `);
@@ -1007,16 +993,12 @@ startEl.addEventListener("change", () => {
     const ymStr = monthPick.value || curYM();
     const q = (qEl.value || "").trim().toLowerCase();
     return records.filter(r => {
-            // 業務專屬網址：只顯示自己 owner 的資料
-      if (OWNER_LOCK && (r.owner || "") !== OWNER) return false;
       if(q && !`${r.customer} ${r.product}`.toLowerCase().includes(q)) return false;
       const sch = findSchedule(r, ymStr);
       if(scope.value === "need" && !sch) return false;
       if(scope.value === "none" && sch) return false;
-      if (!OWNER_LOCK) {
-  if(doneFilter.value === "todo" && (!sch || sch.isDone)) return false;
-  if(doneFilter.value === "done" && (!sch || !sch.isDone)) return false;
-}
+      if(doneFilter.value === "todo" && (!sch || sch.isDone)) return false;
+      if(doneFilter.value === "done" && (!sch || !sch.isDone)) return false;
       return true;
     }).sort((a,b)=> (a.customer||"").localeCompare(b.customer||""));
   }
@@ -1026,8 +1008,9 @@ startEl.addEventListener("change", () => {
     const list = (rec.schedule || []).slice().sort((a,b)=>a.ym.localeCompare(b.ym));
     if(!list.length) return `<span class="small">—</span>`;
     return `<div class="months">` + list.map(s => {
-      const cls = s.isDone ? "mchip done" : "mchip todo";
-      const selected = (s.ym === selectedYM) ? " selected" : "";
+      const isCurrent = (s.ym === selectedYM);
+      const cls = s.isDone ? "mchip done" : (isCurrent ? "mchip currenttodo" : "mchip todo");
+      const selected = isCurrent ? " selected" : "";
       return `<span class="${cls}${selected}"><span class="d"></span>${esc(s.ym)}</span>`;
     }).join("") + `</div>`;
   }
@@ -1092,7 +1075,7 @@ function sanitizeNotesHtml(html){
     const sch = findSchedule(rec, ymStr);
     if(!sch) return `<span class="status"><span class="dot neutral"></span>本月無維護</span>`;
     return sch.isDone ? `<span class="status"><span class="dot good"></span>本月已完工</span>` 
-                      : `<span class="status"><span class="dot warn"></span>本月未完工</span>`;
+                      : `<span class="status"><span class="dot bad"></span>本月未完工</span>`;
   }
   function renderMonthAction(rec, ymStr){
     const sch = findSchedule(rec, ymStr);
@@ -1152,9 +1135,9 @@ function setNotesHtml(html){
     if(!ymList.length) ymList = buildAutoYMList(startEl.value, endEl.value);
     
     const rec = {
-      id: existing?.id || newId(), 
-      owner: (existing?.owner || OWNER || ""),
+      id: existing?.id || newId(),
       customer: customerEl.value.trim(),
+      sales: salesEl.value,
       product: productEl.value.trim(),
       startDate: startEl.value,
       endDate: endEl.value,
@@ -1219,7 +1202,7 @@ btnClear.addEventListener("click", async () => {
   endDateManuallyEdited = false;
 
   if(!id){
-    customerEl.value = ""; productEl.value = ""; setNotesHtml("");
+    customerEl.value = ""; productEl.value = ""; salesEl.value = "willa"; setNotesHtml("");
     startEl.value = todayISO();
 
     // 新增時：迄日自動帶出 +1年-1天
@@ -1229,7 +1212,7 @@ btnClear.addEventListener("click", async () => {
     editingYMList = buildAutoYMList(startEl.value, endEl.value);
   } else {
     const rec = records.find(r => r.id === id);
-    customerEl.value = rec.customer; productEl.value = rec.product;
+    customerEl.value = rec.customer; salesEl.value = (rec.sales || rec.owner || "willa"); productEl.value = rec.product;
     // 回填既有備註到 Quill（可保留原格式）
     setNotesHtml(rec.notes || "");
     startEl.value = rec.startDate; endEl.value = rec.endDate;
@@ -1287,22 +1270,3 @@ btnClear.addEventListener("click", async () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
