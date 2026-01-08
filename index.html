@@ -449,7 +449,6 @@
               <option value="km+"></option>
               <option value="tms+"></option>
               <option value="Adobe Connect"></option>
-              <option value="i-reporter"></option>
             </datalist>
           </div>
         </div>
@@ -529,15 +528,24 @@
       <div class="grid two">
         <div>
           <label>完工日期</label>
+          <!-- 預設帶入今天，可自行調整 -->
           <input type="date" id="mDoneDate" />
         </div>
-        <div style="display:flex; align-items:end;">
-          <label class="status" style="margin:0">
-            <span class="dot good"></span>
-            <input type="checkbox" id="mIsDone" />
-            已完工
-          </label>
+        <div>
+          <label>工程師</label>
+          <select id="mEngineer">
+            <option value="willa">willa</option>
+            <option value="charlie">charlie</option>
+          </select>
         </div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label class="status" style="margin:0">
+          <span class="dot good"></span>
+          <!-- 完工視窗即代表要設定完工：預設已勾選且不需再次操作 -->
+          <input type="checkbox" id="mIsDone" checked style="display:none" />
+          已完工
+        </label>
       </div>
       <div class="divider"></div>
       <div class="row" style="justify-content:flex-end">
@@ -734,6 +742,7 @@ const quill = new Quill(notesEditorEl, {
   const mSub = document.getElementById("mSub");
   const mClose = document.getElementById("mClose");
   const mDoneDate = document.getElementById("mDoneDate");
+  const mEngineer = document.getElementById("mEngineer");
   const mIsDone = document.getElementById("mIsDone");
   const mSave = document.getElementById("mSave");
 
@@ -900,8 +909,15 @@ startEl.addEventListener("change", () => {
     modalCtx = { recordId, ym };
 
     mSub.textContent = `${rec.customer}｜${rec.product}｜${ym}`;
-    mIsDone.checked = !!sch.isDone;
-    mDoneDate.value = sch.doneDate || (sch.isDone ? todayISO() : "");
+
+    // 完工視窗：預設就是要設定完工
+    mIsDone.checked = true;
+
+    // 預設帶入今天（可自行調整）；若已有完工日期則回填
+    mDoneDate.value = sch.doneDate || todayISO();
+
+    // 回填工程師；預設 willa
+    if (mEngineer) mEngineer.value = sch.engineer || "willa";
 
     doneModal.style.display = "flex";
   }
@@ -943,7 +959,7 @@ startEl.addEventListener("change", () => {
               <div class="dot ${dotCls}" style="margin-top:3px"></div>
               <div>
                 <div class="taskTitle">${esc(r.customer)}</div>
-                <div class="taskSub">${esc(r.product)}｜業務 ${esc(r.sales || r.owner || "-")}｜${sch.isDone ? "已完工" : "未完工"}</div>
+                <div class="taskSub">${esc(r.product)}｜業務 ${esc(r.sales || r.owner || "-")}｜工程師 ${esc(sch.engineer || "-")}｜${sch.isDone ? "已完工" : "未完工"}</div>
               </div>
             </div>
           `);
@@ -1074,8 +1090,11 @@ function sanitizeNotesHtml(html){
   function renderMonthStatus(rec, ymStr){
     const sch = findSchedule(rec, ymStr);
     if(!sch) return `<span class="status"><span class="dot neutral"></span>本月無維護</span>`;
-    return sch.isDone ? `<span class="status"><span class="dot good"></span>本月已完工</span>` 
-                      : `<span class="status"><span class="dot bad"></span>本月未完工</span>`;
+    if(sch.isDone){
+      const eng = sch.engineer ? `（工程師 ${esc(sch.engineer)}）` : "";
+      return `<span class="status"><span class="dot good"></span>本月已完工${eng}</span>`;
+    }
+    return `<span class="status"><span class="dot bad"></span>本月未完工</span>`;
   }
   function renderMonthAction(rec, ymStr){
     const sch = findSchedule(rec, ymStr);
@@ -1108,7 +1127,7 @@ function setNotesHtml(html){
 
     if(sch.isDone){
       if(!confirm("取消完工？")) return;
-      sch.isDone = false; sch.doneDate = "";
+      sch.isDone = false; sch.doneDate = ""; sch.engineer = "";
       await save(); // 同步雲端
       renderHome();
     } else {
@@ -1120,8 +1139,10 @@ function setNotesHtml(html){
     if(!modalCtx) return;
     const rec = records.find(r => r.id === modalCtx.recordId);
     const sch = findSchedule(rec, modalCtx.ym);
-    sch.isDone = !!mIsDone.checked;
-    sch.doneDate = sch.isDone ? (mDoneDate.value || todayISO()) : "";
+    // 設定完工：預設即為完工
+    sch.isDone = true;
+    sch.doneDate = (mDoneDate.value || todayISO());
+    sch.engineer = (mEngineer && mEngineer.value) ? mEngineer.value : (sch.engineer || "");
     await save(); // 同步雲端
     doneModal.style.display = "none";
     renderHome();
