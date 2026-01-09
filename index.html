@@ -18,7 +18,7 @@
       --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
     * { box-sizing: border-box; }
-    /* 預設完全隱藏，密碼正確後才由 JS 開啟 */
+    /* 修改 A：預設維持隱藏，通過驗證才顯示 */
     body { display: none; margin: 0; font-family: 'Inter', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
     
     .container { max-width: 1450px; margin: 0 auto; padding: 20px; }
@@ -192,14 +192,12 @@
 </div>
 
 <script>
-    // 請確認後端 GAS 腳本有檢查 pwd 參數
     const API_URL = "https://script.google.com/macros/s/AKfycbznmfZ1quMslZxY6dftt_83uYqUGTh9THmoIO4LdFx7O9CPl0eKn2vvLP0YqM9nv2jf/exec?token=otsukakh5501398";
     let records = [], editingId = null, editingYMList = [], quill, modalTarget = null;
     let mode = new URLSearchParams(window.location.search).get('mode') || 'user';
     const esc = (t) => String(t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     async function load() {
-        // 月份清單初始化
         const now = new Date(), currentYM = now.toISOString().slice(0, 7);
         const monthPick = document.getElementById('monthPick');
         for(let i=-6; i<=18; i++) {
@@ -208,15 +206,13 @@
           monthPick.insertAdjacentHTML('beforeend', `<option value="${val}" ${val===currentYM?'selected':''}>${val}</option>`);
         }
 
-        // 密碼驗證邏輯：強制獲取密碼，若失敗不顯示頁面
+        // 修改 A：嚴格密碼驗證
         let pwd = sessionStorage.getItem('sys_pwd');
-        if (!pwd) {
-            pwd = prompt("🔒 請輸入存取密碼：");
-        }
+        if (!pwd) pwd = prompt("🔒 請輸入存取密碼：");
 
         if (!pwd) {
-            alert("密碼為必填欄位，頁面無法載入。");
-            location.reload(); 
+            alert("必須輸入密碼。");
+            location.reload();
             return;
         }
 
@@ -224,19 +220,17 @@
             const resp = await fetch(`${API_URL}&pwd=${encodeURIComponent(pwd)}`);
             const data = await resp.json();
             
-            // 關鍵點：判斷後端傳回的 status 是否為 error
-            if (data.status === "error" || data.message === "Invalid Password") { 
-                alert("❌ 密碼錯誤，請重新輸入。");
+            // 嚴格判斷：如果 GAS 回傳 status 為 error，視為密碼錯誤
+            if (data.status === "error") {
+                alert("❌ 密碼錯誤，請重新嘗試。");
                 sessionStorage.removeItem('sys_pwd');
-                location.reload(); 
-                return; 
+                location.reload();
+                return;
             }
 
-            // 驗證成功，儲存密碼並載入內容
             sessionStorage.setItem('sys_pwd', pwd);
             records = Array.isArray(data) ? data : [];
             
-            // 初始化 Quill 編輯器 (含顏色設定)
             quill = new Quill('#editor-container', {
                 theme: 'snow',
                 modules: {
@@ -249,12 +243,13 @@
                 }
             });
 
-            // 驗證通過後才顯示 body
+            // 只有驗證成功才顯示 body
             document.body.style.display = "block";
             updateUIByMode(); 
             render();
-        } catch (e) { 
-            alert("❌ 連線失敗或密碼驗證錯誤，請檢查網路。"); 
+        } catch (e) {
+            alert("❌ 連線異常或密碼錯誤。");
+            sessionStorage.removeItem('sys_pwd');
             location.reload();
         }
     }
@@ -264,22 +259,25 @@
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
     }
 
-    // 迄日自動計算：起始日 + 1年 - 1天
+    // 修改 B：調整自動顯示至 12/31 (精準計算一年期前一天)
     window.calcDefaultSchedule = () => {
         const startVal = document.getElementById('startDate').value;
         if (!startVal) return;
-        const parts = startVal.split('-');
-        const y = parseInt(parts[0]), m = parseInt(parts[1]) - 1, d = parseInt(parts[2]);
-        // 修改後的邏輯：直接將年份 +1，月份不變，日期減 1
-const endObj = new Date(y + 1, m, d - 1); 
-
-// 若上述仍有落差，最精準的「一年期減一天」寫法為：
-const endObj = new Date(y, m, d); // 先建立起始日物件
-endObj.setFullYear(endObj.getFullYear() + 1); // 年份加 1
-endObj.setDate(endObj.getDate() - 1); // 日期減 1
-        document.getElementById('endDate').value = endObj.toISOString().slice(0, 10);
         
-        // 自動帶入維護月份 (3, 6, 9, 12月)
+        // 修正迄日邏輯
+        const startDate = new Date(startVal);
+        const endDate = new Date(startVal);
+        endDate.setFullYear(endDate.getFullYear() + 1); // 加一年
+        endDate.setDate(endDate.getDate() - 1);         // 減一天
+        
+        const yyyy = endDate.getFullYear();
+        const mm = String(endDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(endDate.getDate()).padStart(2, '0');
+        document.getElementById('endDate').value = `${yyyy}-${mm}-${dd}`;
+        
+        // 自動帶入月份邏輯 (+2, +5, +8, +11)
+        const parts = startVal.split('-');
+        const y = parseInt(parts[0]), m = parseInt(parts[1]) - 1;
         editingYMList = [];
         [2, 5, 8, 11].forEach(offset => {
             const t = new Date(y, m + offset, 1);
@@ -424,8 +422,6 @@ endObj.setDate(endObj.getDate() - 1); // 日期減 1
     document.getElementById('monthPick').onchange = render;
     document.getElementById('scope').onchange = render;
     document.getElementById('btnNew').onclick = () => openEdit();
-    
-    // 啟動載入程序
     load();
 </script>
 </body>
