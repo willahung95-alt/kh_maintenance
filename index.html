@@ -178,117 +178,269 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbznmfZ1quMslZxY6dftt_83uYqUGTh9THmoIO4LdFx7O9CPl0eKn2vvLP0YqM9nv2jf/exec?token=otsukakh5501398"; 
-    let records = [], mode = "eng", editingId = null, editingYMList = [], quill, modalTarget = null;
+const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode') || 'user';
+    const API_URL = "https://script.google.com/macros/s/AKfycbznmfZ1quMslZxY6dftt_83uYqUGTh9THmoIO4LdFx7O9CPl0eKn2vvLP0YqM9nv2jf/exec?token=otsukakh5501398";
 
-    document.addEventListener('DOMContentLoaded', () => {
-      quill = new Quill('#editor-container', { modules: { toolbar: [['bold', 'underline'], [{ 'color': [] }], ['clean']] }, theme: 'snow' });
-      document.getElementById('monthPick').value = new Date().toISOString().slice(0, 7);
-      load();
+    let records = [];
+    let editingId = null;
+    let editingYMList = [];
+    let quill;
 
-      document.getElementById('btnDelete').onclick = async () => {
-        if (!editingId) return;
-        if (confirm(`確定要永久刪除「${document.getElementById('customer').value}」的紀錄嗎？`)) {
-          records = records.filter(r => r.id !== editingId);
-          await saveAll(); closeAllDrawers();
-        }
-      };
-    });
+    const esc = (t) => String(t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    const esc = (s) => String(s || "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    
-async function load() {
-      // 1. 取得密碼
-      let pwd = sessionStorage.getItem('sys_pwd');
-      if (!pwd) {
-        pwd = prompt("🔒 此為私人系統，請輸入存取密碼：");
+    // 1. 修正：增加遺失的 saveAll 函式
+    async function saveAll() {
+      const pwd = sessionStorage.getItem('sys_pwd');
+      const fullUrl = `${API_URL}&pwd=${encodeURIComponent(pwd)}`;
+      try {
+        const resp = await fetch(fullUrl, {
+          method: 'POST',
+          body: JSON.stringify(records)
+        });
+        const res = await resp.json();
+        if (res.result !== "success") alert("儲存失敗：" + res.message);
+      } catch (e) {
+        alert("儲存連線失敗");
       }
+      render();
+    }
+
+    // 2. 修正：強健的載入函式
+    async function load() {
+      let pwd = sessionStorage.getItem('sys_pwd');
+      if (!pwd) pwd = prompt("🔒 此為私人系統，請輸入存取密碼：");
 
       if (!pwd) {
-        document.body.innerHTML = "<div style='text-align:center; margin-top:100px;'><h2>請輸入密碼以檢視內容。</h2><button onclick='location.reload()'>重新輸入</button></div>";
+        document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px;'>請輸入密碼後重新整理網頁。</h2>";
         document.body.style.display = "block";
         return;
       }
 
       try {
-        // 2. 請求資料 (注意這裡改成了 &pwd=，因為您的 API_URL 已經有 ?token=...)
         const resp = await fetch(`${API_URL}&pwd=${encodeURIComponent(pwd)}`);
         const data = await resp.json();
-        
-        // 3. 檢查回傳格式
+
         if (data && data.status === "error") {
-          alert("密碼錯誤，請重新輸入");
+          alert("密碼或權限錯誤");
           sessionStorage.removeItem('sys_pwd');
           location.reload();
           return;
         }
 
-        // 4. 驗證成功處理
         sessionStorage.setItem('sys_pwd', pwd);
+        records = Array.isArray(data) ? data : [];
+        // 初始化 Quill
+        quill = new Quill('#editor', { theme: 'snow' });
+        // 顯示內容並渲染
         document.body.style.display = "block";
-
-        // 5. 解析資料 (A1 儲存的是 JSON 陣列)
-        let finalData = Array.isArray(data) ? data : [];
-        
-        // 統一將業務設為 Willa (除非原本就有填)
-        records = finalData.map(r => ({ 
-          ...r, 
-          salesName: r.salesName || "Willa" 
-        }));
-        
-        console.log("資料載入成功，共 " + records.length + " 筆");
-        render(); 
-
+        render();
       } catch (e) {
-        console.error("載入失敗:", e);
-        // 如果連線成功但解析失敗，可能是 GAS 那邊沒處理好 token 或密碼邏輯
-        alert("資料載入失敗，請檢查網路或密碼。");
+        console.error(e);
+        alert("無法讀取資料，請確認網路連線。");
       }
     }
 
-  function render() {
+    // 3. 修正：render 函式 (加入排序與維護期間)
+    function render() {
       const ym = document.getElementById('monthPick').value;
       const q = document.getElementById('q').value.toLowerCase();
       const scope = document.getElementById('scope').value;
-      
-      // 1. 過濾資料
+
       let filtered = records.filter(r => {
         const hasSch = (r.schedule || []).some(s => s.ym === ym);
-        const textMatch = !q || r.customer.toLowerCase().includes(q) || (r.salesName||'').toLowerCase().includes(q);
+        const textMatch = !q || r.customer.toLowerCase().includes(q) || (r.salesName || "").toLowerCase().includes(q);
         return (scope === 'need' ? hasSch : true) && textMatch;
       });
 
-      // 2. 排序邏輯：依照客戶名稱排序，讓相同客戶排在一起
+      // 客戶名稱排序
       filtered.sort((a, b) => (a.customer || "").localeCompare((b.customer || ""), 'zh-Hant'));
 
-      // 3. 更新統計數據
       document.getElementById('statTotal').textContent = records.length;
-      document.getElementById('statDone').textContent = filtered.filter(r => r.schedule?.some(s => s.ym === ym && s.isDone)).length;
-      document.getElementById('statTodo').textContent = filtered.filter(r => r.schedule?.some(s => s.ym === ym && !s.isDone)).length;
-      
+      document.getElementById('statDone').textContent = filtered.filter(r => (r.schedule || []).some(s => s.ym === ym && s.isDone)).length;
+      document.getElementById('statTodo').textContent = filtered.filter(r => (r.schedule || []).some(s => s.ym === ym && !s.isDone)).length;
+
       const tbody = document.getElementById('rows');
       tbody.innerHTML = '';
+
+      filtered.forEach(r => {
+        const sch = (r.schedule || []).find(s => s.ym === ym);
+        const hasNote = r.notes && r.notes.replace(/<[^>]*>/g, '').trim().length > 0;
+
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:5px;">
+                <span style="font-weight:700;">${esc(r.customer)}</span>
+                ${hasNote ? `<span class="material-symbols-rounded note-trigger" onclick="viewNote('${r.id}')">description</span>` : ''}
+              </div>
+            </td>
+            <td><div style="font-size:0.75rem;">${esc(r.product)}</div><span class="sales-tag">${esc(r.salesName || "Willa")}</span></td>
+            <td><div style="font-size:0.8rem;color:#64748b;">${esc(r.startDate)}<br>至 ${esc(r.endDate)}</div></td>
+            <td>${(r.schedule || []).map(s => `<span class="month-chip ${s.isDone ? 'is-done' : ''} ${s.ym === ym ? 'active' : ''}">${s.ym.slice(5)}月</span>`).join('')}</td>
+            <td onclick="handleStatusClick('${r.id}', '${ym}')" style="cursor:pointer">
+              ${sch ? (sch.isDone ? `<span style="color:#10b981;font-weight:600">已完工</span><br><span class="eng-tag">${esc(sch.engName)}</span>` : `<span style="color:#f59e0b;font-weight:600">待維護</span>`) : '--'}
+            </td>
+            <td>
+              <div style="display:flex; gap:5px;">
+                ${sch ? `<button class="btn btn-outline" onclick="handleStatusClick('${r.id}', '${ym}')"><span class="material-symbols-rounded">${sch.isDone ? 'settings_backup_restore' : 'done_all'}</span></button>` : ''}
+                ${mode === 'admin' ? `<button class="btn btn-outline" onclick="openEdit('${r.id}')"><span class="material-symbols-rounded">edit</span></button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `);
+      });
+      document.getElementById('btnNew').style.display = (mode === 'admin') ? '' : 'none';
+    }
+
+    // 事件綁定與其餘視窗邏輯
+    window.viewNote = (id) => {
+      const r = records.find(x => x.id === id);
+      if (!r) return;
+      document.getElementById('noteTitle').textContent = r.customer + " - 備註";
+      document.getElementById('noteContent').innerHTML = r.notes || "無備註";
+      document.getElementById('drawerNote').classList.add('active');
+    };
+    
+    window.openEdit = (id) => {
+      editingId = id;
+      const r = records.find(x => x.id === id) || { customer: "", product: "", salesName: "Willa", startDate: "", endDate: "", notes: "", schedule: [] };
+      document.getElementById('editTitle').textContent = id ? "編輯客戶" : "新增客戶";
+      document.getElementById('customer').value = r.customer;
+      document.getElementById('product').value = r.product;
+      document.getElementById('salesName').value = r.salesName || "Willa";
+      document.getElementById('startDate').value = r.startDate;
+      document.getElementById('endDate').value = r.endDate;
+      quill.root.innerHTML = r.notes || "";
+      editingYMList = (r.schedule || []).map(s => s.ym).sort();
+      renderYMChips();
+      document.getElementById('drawerEdit').classList.add('active');
+    };
+
+    window.closeAllDrawers = () => {
+      document.querySelectorAll('.drawer').forEach(d => d.classList.remove('active'));
+    };
+
+    window.handleStatusClick = async (id, ym) => {
+      const r = records.find(x => x.id === id);
+      if (!r) return;
+      const sch = (r.schedule || []).find(s => s.ym === ym);
+      if (!sch) return;
+      if (!sch.isDone) {
+        const eng = prompt("請輸入維護工程師姓名：", sessionStorage.getItem('last_eng') || "");
+        if (!eng) return;
+        sessionStorage.setItem('last_eng', eng);
+        sch.isDone = true;
+        sch.engName = eng;
+        sch.doneDate = new Date().toISOString();
+      } else {
+        if (!confirm("確定要取消完工狀態嗎？")) return;
+        sch.isDone = false;
+        sch.engName = "";
+        sch.doneDate = "";
+      }
+      await saveAll();
+    };
+
+    window.renderYMChips = () => {
+      document.getElementById('ymChips').innerHTML = editingYMList.map(ym => `<span class="editor-mchip">${ym.slice(5)}月 <span class="remove-btn" onclick="removeYM('${ym}')">×</span></span>`).join('');
+    };
+    window.removeYM = (ym) => { editingYMList = editingYMList.filter(x => x !== ym); renderYMChips(); };
+    window.addYM = () => {
+      const v = document.getElementById('addYMInput').value;
+      if (v && !editingYMList.includes(v)) { editingYMList.push(v); editingYMList.sort(); renderYMChips(); }
+    };
+
+    document.getElementById('formEdit').onsubmit = async (e) => {
+      e.preventDefault();
+      const rData = {
+        id: editingId || 'ID-' + Date.now(),
+        customer: document.getElementById('customer').value,
+        product: document.getElementById('product').value,
+        salesName: document.getElementById('salesName').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        notes: quill.root.innerHTML,
+        schedule: editingYMList.map(ym => {
+          const old = (records.find(x => x.id === editingId)?.schedule || []).find(s => s.ym === ym);
+          return old || { ym, isDone: false, engName: "" };
+        })
+      };
+      if (!editingId) records.push(rData); else records[records.findIndex(x => x.id === editingId)] = rData;
+      await saveAll();
+      closeAllDrawers();
+    };
+
+    document.getElementById('q').oninput = render;
+    document.getElementById('monthPick').onchange = render;
+    document.getElementById('scope').onchange = render;
+
+    // 啟動程式
+    load();
       
       // 4. 產生表格列
       filtered.forEach(r => {
+        // 找到當前選擇月份的維護計畫
         const sch = (r.schedule || []).find(s => s.ym === ym);
+        // 檢查備註是否有文字內容
         const hasNote = r.notes && r.notes.replace(/<[^>]*>/g, '').trim().length > 0;
         
         tbody.insertAdjacentHTML('beforeend', `
           <tr>
             <td>
-              <div style="display:flex; align-items:center;">
+              <div style="display:flex; align-items:center; gap:5px;">
                 <span style="font-weight:700;">${esc(r.customer)}</span>
                 ${hasNote ? `<span class="material-symbols-rounded note-trigger" onclick="viewNote('${r.id}')">description</span>` : ''}
               </div>
             </td>
-            <td><div style="font-size:0.75rem;">${esc(r.product)}</div><span class="sales-tag">${esc(r.salesName)}</span></td>
+
+            <td>
+              <div style="font-size:0.75rem;">${esc(r.product)}</div>
+              <span class="sales-tag">${esc(r.salesName || "Willa")}</span>
+            </td>
             
             <td>
               <div style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;">
                 ${esc(r.startDate)} <br>至 ${esc(r.endDate)}
               </div>
             </td>
+
+            <td>
+              <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                ${(r.schedule || []).map(s => `
+                  <span class="month-chip ${s.isDone ? 'is-done' : ''} ${s.ym === ym ? 'active' : ''}">
+                    ${s.ym.slice(5)}月
+                  </span>
+                `).join('')}
+              </div>
+            </td>
+
+            <td onclick="handleStatusClick('${r.id}', '${ym}')" style="cursor:pointer">
+              ${sch ? (
+                sch.isDone 
+                ? `<span style="color:var(--success); font-weight:600">已完工</span><br><span class="eng-tag">${esc(sch.engName)}</span>` 
+                : `<span style="color:var(--warning); font-weight:600; display:inline-flex; align-items:center; gap:4px;"><span class="material-symbols-rounded" style="font-size:16px;">priority_high</span>待維護</span>`
+              ) : '<span style="color:#cbd5e1">--</span>'}
+            </td>
+
+            <td>
+              <div style="display:flex; gap:5px;">
+                ${sch ? `
+                  <button class="btn btn-outline" style="padding:6px; height:34px" onclick="handleStatusClick('${r.id}', '${ym}')" title="切換完工狀態">
+                    <span class="material-symbols-rounded" style="font-size:20px;">${sch.isDone ? 'settings_backup_restore' : 'done_all'}</span>
+                  </button>
+                ` : ''}
+                
+                ${mode === 'admin' ? `
+                  <button class="btn btn-outline" style="padding:6px; height:34px" onclick="openEdit('${r.id}')" title="編輯資料">
+                    <span class="material-symbols-rounded" style="font-size:20px;">edit</span>
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `);
+      }); // forEach 結束
 
             <td>${(r.schedule || []).map(s => `<span class="month-chip ${s.isDone?'is-done':''} ${s.ym===ym?'active':''}">${s.ym.slice(5)}月</span>`).join('')}</td>
             <td onclick="handleStatusClick('${r.id}', '${ym}')" style="cursor:pointer">${sch ? (sch.isDone ? `<span style="color:var(--success); font-weight:600">已完工</span><br><span class="eng-tag">${esc(sch.engName)}</span>` : `<span style="color:var(--warning); font-weight:600; display:inline-flex; align-items:center; gap:4px;"><span class="material-symbols-rounded" style="font-size:16px;">priority_high</span>待維護</span>`) : '--'}</td>
@@ -415,6 +567,7 @@ async function load() {
   </script>
 </body>
 </html>
+
 
 
 
