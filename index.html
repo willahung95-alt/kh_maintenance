@@ -12,396 +12,377 @@
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
   <style>
-    /* 預設隱藏整個 body */
-    body { display: none; margin: 0; font-family: sans-serif; background: #f8fafc; }
-  /* 防止在慢速網路下出現閃爍 */
     :root {
-      --primary: #4361ee; --primary-light: #eef2ff; --success: #10b981;
-      --warning: #f59e0b; --danger: #ef4444; --text-main: #1e293b;
-      --text-muted: #64748b; --bg-body: #f8fafc; --card-bg: #ffffff;
-      --border: #e2e8f0; --radius-lg: 16px; --radius-md: 12px;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --primary: #4361ee; --primary-light: #eef2ff; --success: #2ec4b6; --warning: #ff9f1c;
+      --danger: #e71d36; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --text-muted: #64748b;
+      --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
-
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Inter', 'Noto Sans TC', sans-serif; background: var(--bg-body); color: var(--text-main); }
+    /* 預設完全隱藏，密碼正確後才由 JS 開啟 */
+    body { display: none; margin: 0; font-family: 'Inter', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
     
-    header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
-    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.25rem; color: var(--primary); }
-    
-    .version-badge { font-size: 0.65rem; background: #f1f5f9; color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-weight: 400; margin-left: 8px; display: none; }
-    body.mode-admin .version-badge { display: inline-block; }
+    .container { max-width: 1450px; margin: 0 auto; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px; }
+    .page-title { font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--primary); display: flex; align-items: center; gap: 8px; }
 
-    .mode-switcher { background: #f1f5f9; padding: 4px; border-radius: 100px; display: flex; gap: 4px; border: 1px solid var(--border); }
-    .mode-btn { border: none; padding: 6px 16px; border-radius: 100px; background: transparent; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.3s; }
-    .mode-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .toolbar { background: var(--card); padding: 16px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border: 1px solid var(--border); }
+    .search-box { position: relative; flex: 1; min-width: 200px; }
+    .search-box input { width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+    .search-box .material-symbols-rounded { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-    main { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
-    .stat-card { background: var(--card-bg); padding: 1.25rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); display: flex; align-items: center; gap: 1rem; }
-
-    .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
-    .search-wrapper { flex: 2; position: relative; display: flex; align-items: center; }
-    .search-wrapper input { width: 100%; padding: 10px 10px 10px 40px; border-radius: var(--radius-md); border: 1px solid var(--border); outline: none; height: 42px; }
-    .search-wrapper .material-symbols-rounded { position: absolute; left: 12px; color: var(--text-muted); }
-    .control-item { flex: 1; height: 42px; border-radius: var(--radius-md); border: 1px solid var(--border); padding: 0 10px; background: white; min-width: 120px; }
-    
-    .btn { padding: 8px 16px; border-radius: var(--radius-md); border: none; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; transition: 0.2s; white-space: nowrap; height: 42px; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-outline { background: white; border: 1px solid var(--border); color: var(--text-main); }
-    
-    .sales-tag { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
-    .eng-tag { background: #f0fdf4; border: 1px solid #86efac; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-block; margin-top: 4px; }
-    .month-chip { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-flex; border: 1px solid var(--border); background: #f1f5f9; color: var(--text-muted); }
-    .month-chip.is-done { background: #dcfce7; color: #166534; border-color: #86efac; }
-    .month-chip.active:not(.is-done) { border: 1px solid var(--danger); background-color: #fff1f2; color: var(--text-muted); }
-
-    /* 備註圖示樣式優化 */
-    .note-trigger { 
-      cursor: pointer; color: var(--primary); margin-left: 8px; display: inline-flex; align-items: center; 
-      padding: 4px; border-radius: 50%; transition: 0.2s;
-    }
-    .note-trigger:hover { background: var(--primary-light); }
-
-    .table-container { background: var(--card-bg); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 900px; }
-    th { background: #f8fafc; padding: 16px; font-size: 0.8rem; color: var(--text-muted); text-align: left; border-bottom: 1px solid var(--border); }
+    .table-container { background: var(--card); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed; }
+    th { background: #f1f5f9; padding: 12px 16px; font-weight: 600; font-size: 0.9rem; color: var(--text-muted); border-bottom: 1px solid var(--border); }
     td { padding: 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    
+    .col-customer { width: 22%; }
+    .col-product  { width: 12%; }
+    .col-period   { width: 18%; }
+    .col-schedule { width: 30%; padding-right: 30px; }
+    .col-status   { width: 10%; }
+    .col-action   { width: 8%; }
 
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 999; display: none; }
-    .drawer { position: fixed; right: -100%; top: 0; width: 100%; max-width: 500px; height: 100%; background: white; z-index: 1000; transition: right 0.3s ease; padding: 2rem; overflow-y: auto; box-shadow: -10px 0 30px rgba(0,0,0,0.1); }
+    .cust-cell { display: flex; align-items: center; gap: 8px; }
+    .note-trigger { color: var(--primary); cursor: pointer; transition: 0.2s; font-size: 20px; }
+    .note-trigger:hover { color: #2b44b8; transform: scale(1.1); }
+
+    .month-group { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; width: 100%; }
+    .month-chip { padding: 2px 0; border-radius: 4px; font-size: 0.75rem; background: #f1f5f9; color: var(--text-muted); border: 1px solid var(--border); text-align: center; }
+    .month-chip.active { border: 2px solid var(--primary); font-weight: 700; color: var(--primary); background: #fff; }
+    .month-chip.is-done { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+
+    .sales-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; background: var(--primary-light); color: var(--primary); font-size: 0.7rem; font-weight: 500; margin-top: 4px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-outline { background: white; border: 1px solid var(--border); color: var(--text); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 90; backdrop-filter: blur(2px); }
+    .drawer { position: fixed; top: 0; right: -600px; width: 600px; height: 100%; background: white; z-index: 100; transition: 0.3s ease; padding: 24px; box-shadow: -4px 0 15px rgba(0,0,0,0.1); overflow-y: auto; }
     .drawer.open { right: 0; }
+    .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
     
-    .note-view-content { line-height: 1.6; color: #334155; font-size: 0.95rem; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+    
+    .view-notes-box { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid var(--border); min-height: 200px; line-height: 1.8; }
+    
+    .editor-mchip { display: inline-flex; align-items: center; background: var(--primary-light); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; }
+    .remove-btn { margin-left: 6px; cursor: pointer; color: var(--danger); font-weight: bold; }
 
-    .form-group { margin-bottom: 1.25rem; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
-    input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.95rem; }
-    #editor-container { height: 250px; border-radius: 0 0 8px 8px; }
-    
-    .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; padding: 2rem; border-radius: var(--radius-lg); z-index: 1100; width: 90%; max-width: 400px; display: none; }
+    @media (max-width: 1200px) {
+      .drawer { width: 100%; right: -100%; }
+      table { table-layout: auto; }
+    }
   </style>
 </head>
-<body class="mode-eng">
+<body>
 
+<div class="container">
   <header>
-    <div class="logo"><span class="material-symbols-rounded">analytics</span> 客戶系統維護清單 <span class="version-badge">v5.260108</span></div>
-    <div class="mode-switcher" id="modeSeg">
-      <button class="mode-btn" data-mode="admin">管理者</button>
-      <button class="mode-btn active" data-mode="eng">工程師</button>
+    <h1 class="page-title"><span class="material-symbols-rounded">fact_check</span> 客戶系統維護清單</h1>
+    <div style="display:flex; gap:10px;">
+      <div id="modeSeg" style="display:flex; background:#e2e8f0; padding:4px; border-radius:8px;">
+        <button class="mode-btn btn active" data-mode="user" style="padding:6px 12px; font-size:0.8rem;">檢視模式</button>
+        <button class="mode-btn btn" data-mode="admin" style="padding:6px 12px; font-size:0.8rem;">管理模式</button>
+      </div>
+      <button id="btnNew" class="btn btn-primary" style="display:none;"><span class="material-symbols-rounded">add_task</span>新增維護</button>
     </div>
   </header>
 
-  <main>
-    <div class="stats-row">
-      <div class="stat-card">
-        <div style="background:var(--primary-light); color:var(--primary); padding:10px; border-radius:12px;"><span class="material-symbols-rounded">inventory_2</span></div>
-        <div><div style="font-size:0.75rem; color:var(--text-muted);">總維護數</div><div style="font-size:1.25rem; font-weight:700;" id="statTotal">0</div></div>
-      </div>
-      <div class="stat-card">
-        <div style="background:#dcfce7; color:var(--success); padding:10px; border-radius:12px;"><span class="material-symbols-rounded">verified</span></div>
-        <div><div style="font-size:0.75rem; color:var(--text-muted);">本月已完工</div><div style="font-size:1.25rem; font-weight:700;" id="statDone">0</div></div>
-      </div>
-      <div class="stat-card">
-        <div style="background:#fff1f2; color:var(--danger); padding:10px; border-radius:12px;"><span class="material-symbols-rounded">notification_important</span></div>
-        <div><div style="font-size:0.75rem; color:var(--text-muted);">本月待處理</div><div style="font-size:1.25rem; font-weight:700;" id="statTodo">0</div></div>
-      </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="material-symbols-rounded">search</span>
+      <input type="text" id="q" placeholder="搜尋客戶名稱或業務...">
     </div>
-
-    <div class="controls">
-      <div class="search-wrapper">
-        <span class="material-symbols-rounded">search</span>
-        <input type="text" id="q" placeholder="快速搜尋客戶或業務...">
-      </div>
-      <input type="month" id="monthPick" class="control-item">
-      <select id="scope" class="control-item">
-        <option value="all">全部紀錄</option>
-        <option value="need">本月維護</option>
+    <div style="display:flex; gap:8px;">
+      <select id="monthPick" class="btn btn-outline" style="padding:8px;"></select>
+      <select id="scope" class="btn btn-outline" style="padding:8px;">
+        <option value="all">顯示全部</option>
+        <option value="need" selected>僅顯示本月需維護</option>
       </select>
-      <button class="btn btn-primary" id="btnNew" style="display:none;"><span class="material-symbols-rounded">add</span> 新增維護</button>
     </div>
-
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>客戶名稱</th>
-            <th>產品 / 業務</th>
-            <th>維護期間</th> <th>維護週期</th>
-            <th>狀態 / 工程師</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-  </main>
-
-  <div class="overlay" id="overlay" onclick="closeAllDrawers()"></div>
-
-  <div class="drawer" id="noteDrawer">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-      <h2 id="noteTitle" style="margin:0">客戶備註</h2>
-      <button class="btn btn-outline" style="padding:4px; height:auto;" onclick="closeAllDrawers()"><span class="material-symbols-rounded">close</span></button>
-    </div>
-    <div id="noteContent" class="note-view-content"></div>
-    <button class="btn btn-primary" style="width:100%; margin-top:1.5rem;" onclick="closeAllDrawers()">關閉視窗</button>
   </div>
 
-  <div class="drawer" id="editDrawer">
-    <h2 id="drawerTitle">維護紀錄編輯</h2>
-    <form id="formEdit">
-      <div class="form-group"><label>客戶名稱</label><input type="text" id="customer" required></div>
-      <div class="form-group"><label>產品項目</label><select id="product"><option value="ee-class">ee-class</option><option value="Adobe Connect">Adobe Connect</option><option value="km+">km+</option><option value="tms+">tms+</option></select></div>
-      <div class="form-group"><label>負責業務</label><select id="salesName"><option value="Willa">Willa</option><option value="Melissa">Melissa</option><option value="Anita">Anita</option></select></div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-        <div class="form-group"><label>合約開始</label><input type="date" id="startDate" required></div>
-        <div class="form-group"><label>合約結束</label><input type="date" id="endDate" required></div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-customer">客戶名稱</th>
+          <th class="col-product">產品 / 業務</th>
+          <th class="col-period">維護期間</th>
+          <th class="col-schedule">維護週期</th>
+          <th class="col-status">狀態</th>
+          <th class="col-action">操作</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeAllDrawers()"></div>
+
+<div class="drawer" id="noteDrawer">
+  <div class="drawer-header">
+    <h3 id="noteDrawerTitle" style="margin:0;">客戶備註紀錄</h3>
+    <button class="btn btn-outline" onclick="closeAllDrawers()" style="padding:4px;"><span class="material-symbols-rounded">close</span></button>
+  </div>
+  <div id="noteContent" class="view-notes-box"></div>
+</div>
+
+<div class="drawer" id="editDrawer">
+  <div class="drawer-header">
+    <h3 id="drawerTitle" style="margin:0;">新增維護</h3>
+    <button class="btn btn-outline" onclick="closeAllDrawers()" style="padding:4px;"><span class="material-symbols-rounded">close</span></button>
+  </div>
+  <form id="formEdit">
+    <div class="form-group"><label>客戶名稱</label><input type="text" id="customer" required></div>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:1;"><label>產品線</label>
+        <select id="product">
+          <option value="ee-class">ee-class</option>
+          <option value="Adobe Connect">Adobe Connect</option>
+          <option value="km+">km+</option>
+          <option value="tms+">tms+</option>
+        </select>
       </div>
-      <div class="form-group" style="background:#f8fafc; padding:15px; border-radius:8px;">
-        <label>排程月份</label>
-        <div id="ymList" style="margin:10px 0; display:flex; flex-wrap:wrap; gap:5px;"></div>
-        <div style="display:flex; gap:8px;"><input type="month" id="addYMInput"><button type="button" class="btn btn-outline" onclick="addYM()">新增</button><button type="button" class="btn btn-outline" onclick="recalcSchedule()">計算</button></div>
+      <div class="form-group" style="flex:1;"><label>負責業務</label>
+        <select id="salesName">
+          <option value="Willa">Willa</option>
+          <option value="Melissa">Melissa</option>
+          <option value="Anita">Anita</option>
+        </select>
       </div>
-      <div class="form-group"><label>備註事項</label><div id="editor-container"></div></div>
-      <button type="submit" class="btn btn-primary" style="width:100%">儲存資料</button>
-      <button type="button" class="btn btn-outline" id="btnDelete" style="width:100%; margin-top:10px; color:var(--danger)">刪除此紀錄</button>
-    </form>
-  </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:1;"><label>起始日期</label><input type="date" id="startDate" required onchange="calcDefaultSchedule()"></div>
+      <div class="form-group" style="flex:1;"><label>結束日期</label><input type="date" id="endDate"></div>
+    </div>
+    
+    <div class="form-group" style="background:#f8fafc; padding:12px; border-radius:8px; border:1px dashed #cbd5e1;">
+      <label>維護月份排程</label>
+      <div style="display:flex; gap:5px; margin-bottom:10px;">
+        <input type="month" id="addYMInput" style="flex:1;">
+        <button type="button" class="btn btn-outline" onclick="addYM()">加入</button>
+      </div>
+      <div id="ymList" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+    </div>
 
-  <div class="overlay" id="modalOverlay" onclick="closeModal()"></div>
-  <div class="modal" id="doneModal">
-    <h3 id="mTitle" style="margin:0 0 1rem 0">維護完工回報</h3>
-    <div class="form-group"><label>執行工程師</label><select id="mEngName"><option value="Willa">Willa</option><option value="Charlie">Charlie</option></select></div>
-    <div class="form-group"><label>完工日期</label><input type="date" id="mDoneDate"></div>
-    <div style="display:flex; gap:10px; margin-top:1.5rem"><button id="btnConfirmDone" class="btn btn-primary" style="flex:1">確認送出</button><button onclick="closeModal()" class="btn btn-outline" style="flex:1">取消</button></div>
-  </div>
+    <div class="form-group">
+      <label>備註事項</label>
+      <div id="editor-container" style="height:200px; background:white;"></div>
+    </div>
+    
+    <div style="display:flex; gap:10px; margin-top:24px;">
+      <button type="submit" class="btn btn-primary" style="flex:1;">儲存資料</button>
+      <button type="button" id="btnDelete" class="btn btn-outline" style="color:var(--danger); border-color:var(--danger); display:none;">刪除</button>
+    </div>
+  </form>
+</div>
 
-  <script>
-    // --- 基礎設定 ---
-    const urlParams = new URLSearchParams(window.location.search);
-    let mode = urlParams.get('mode') || 'user'; // 使用 let 允許切換模式
+<div class="modal" id="doneModal" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:24px; border-radius:16px; z-index:110; display:none; width:350px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+  <h3 style="margin-top:0; font-size:1.1rem;">完工回報</h3>
+  <div class="form-group"><label>工程師</label><select id="mEngName"><option value="Willa">Willa</option><option value="Charlie">Charlie</option></select></div>
+  <div class="form-group"><label>完工日期</label><input type="date" id="mDoneDate"></div>
+  <div style="display:flex; gap:10px; margin-top:20px;">
+    <button class="btn btn-primary" id="btnConfirmDone" style="flex:1;">確認</button>
+    <button class="btn btn-outline" onclick="closeModal()" style="flex:1;">取消</button>
+  </div>
+</div>
+
+<script>
+    // 請確認後端 GAS 腳本有檢查 pwd 參數
     const API_URL = "https://script.google.com/macros/s/AKfycbznmfZ1quMslZxY6dftt_83uYqUGTh9THmoIO4LdFx7O9CPl0eKn2vvLP0YqM9nv2jf/exec?token=otsukakh5501398";
-
-    let records = [];
-    let editingId = null;
-    let editingYMList = [];
-    let quill;
-    let modalTarget = null;
-
+    let records = [], editingId = null, editingYMList = [], quill, modalTarget = null;
+    let mode = new URLSearchParams(window.location.search).get('mode') || 'user';
     const esc = (t) => String(t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    // --- 1. 初始化與載入 ---
     async function load() {
-        // 設定預設月份為當月
-        const now = new Date();
-        const currentYM = now.toISOString().slice(0, 7);
-        document.getElementById('monthPick').value = currentYM;
+        // 月份清單初始化
+        const now = new Date(), currentYM = now.toISOString().slice(0, 7);
+        const monthPick = document.getElementById('monthPick');
+        for(let i=-6; i<=18; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+          const val = d.toISOString().slice(0, 7);
+          monthPick.insertAdjacentHTML('beforeend', `<option value="${val}" ${val===currentYM?'selected':''}>${val}</option>`);
+        }
 
+        // 密碼驗證邏輯：強制獲取密碼，若失敗不顯示頁面
         let pwd = sessionStorage.getItem('sys_pwd');
-        if (!pwd) pwd = prompt("🔒 此為私人系統，請輸入存取密碼：");
+        if (!pwd) {
+            pwd = prompt("🔒 請輸入存取密碼：");
+        }
 
         if (!pwd) {
-            document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px;'>請輸入密碼後重新整理網頁。</h2>";
-            document.body.style.display = "block";
+            alert("密碼為必填欄位，頁面無法載入。");
+            location.reload(); 
             return;
         }
 
         try {
             const resp = await fetch(`${API_URL}&pwd=${encodeURIComponent(pwd)}`);
             const data = await resp.json();
-
-            if (data && data.status === "error") {
-                alert("密碼錯誤，請重新整理網頁");
+            
+            // 關鍵點：判斷後端傳回的 status 是否為 error
+            if (data.status === "error" || data.message === "Invalid Password") { 
+                alert("❌ 密碼錯誤，請重新輸入。");
                 sessionStorage.removeItem('sys_pwd');
-                return;
+                location.reload(); 
+                return; 
             }
 
+            // 驗證成功，儲存密碼並載入內容
             sessionStorage.setItem('sys_pwd', pwd);
             records = Array.isArray(data) ? data : [];
             
-            // 初始化 Quill
-            quill = new Quill('#editor-container', { theme: 'snow' });
-            
-            document.body.className = 'mode-' + mode;
+            // 初始化 Quill 編輯器 (含顏色設定)
+            quill = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline'],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // 驗證通過後才顯示 body
             document.body.style.display = "block";
+            updateUIByMode(); 
             render();
-        } catch (e) {
-            console.error(e);
-            alert("讀取失敗，請檢查網路或 API 權限。");
+        } catch (e) { 
+            alert("❌ 連線失敗或密碼驗證錯誤，請檢查網路。"); 
+            location.reload();
         }
     }
 
-    // --- 2. 核心渲染邏輯 ---
-    function render() {
-        const ym = document.getElementById('monthPick').value;
-        const q = document.getElementById('q').value.toLowerCase();
-        const scope = document.getElementById('scope').value;
-        const tbody = document.getElementById('rows');
+    function updateUIByMode() {
+        document.getElementById('btnNew').style.display = mode === 'admin' ? 'inline-flex' : 'none';
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    }
 
+    // 迄日自動計算：起始日 + 1年 - 1天
+    window.calcDefaultSchedule = () => {
+        const startVal = document.getElementById('startDate').value;
+        if (!startVal) return;
+        const parts = startVal.split('-');
+        const y = parseInt(parts[0]), m = parseInt(parts[1]) - 1, d = parseInt(parts[2]);
+        // 修改後的邏輯：直接將年份 +1，月份不變，日期減 1
+const endObj = new Date(y + 1, m, d - 1); 
+
+// 若上述仍有落差，最精準的「一年期減一天」寫法為：
+const endObj = new Date(y, m, d); // 先建立起始日物件
+endObj.setFullYear(endObj.getFullYear() + 1); // 年份加 1
+endObj.setDate(endObj.getDate() - 1); // 日期減 1
+        document.getElementById('endDate').value = endObj.toISOString().slice(0, 10);
+        
+        // 自動帶入維護月份 (3, 6, 9, 12月)
+        editingYMList = [];
+        [2, 5, 8, 11].forEach(offset => {
+            const t = new Date(y, m + offset, 1);
+            editingYMList.push(t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0'));
+        });
+        renderYMChips();
+    };
+
+    function render() {
+        const ym = document.getElementById('monthPick').value, q = document.getElementById('q').value.toLowerCase(), scope = document.getElementById('scope').value;
+        const tbody = document.getElementById('rows');
         let filtered = records.filter(r => {
             const hasSch = (r.schedule || []).some(s => s.ym === ym);
-            const textMatch = !q || r.customer.toLowerCase().includes(q) || (r.salesName || "").toLowerCase().includes(q);
-            return (scope === 'need' ? hasSch : true) && textMatch;
+            return (scope === 'need' ? hasSch : true) && (!q || r.customer.toLowerCase().includes(q) || (r.salesName || "").toLowerCase().includes(q));
         });
-
-        filtered.sort((a, b) => (a.customer || "").localeCompare(b.customer, 'zh-Hant'));
-
-        // 更新統計數字
-        document.getElementById('statTotal').textContent = records.length;
-        document.getElementById('statDone').textContent = filtered.filter(r => (r.schedule || []).some(s => s.ym === ym && s.isDone)).length;
-        document.getElementById('statTodo').textContent = filtered.filter(r => (r.schedule || []).some(s => s.ym === ym && !s.isDone)).length;
-
+        filtered.sort((a, b) => a.customer.localeCompare(b.customer, 'zh-Hant'));
         tbody.innerHTML = '';
         filtered.forEach(r => {
             const sch = (r.schedule || []).find(s => s.ym === ym);
-            const hasNote = r.notes && r.notes.replace(/<[^>]*>/g, '').trim().length > 0;
+            const hasNotes = r.notes && r.notes.replace(/<(.|\n)*?>/g, '').trim().length > 0;
 
             tbody.insertAdjacentHTML('beforeend', `
                 <tr>
-                    <td>
-                        <div style="display:flex; align-items:center; gap:5px;">
+                    <td class="col-customer">
+                        <div class="cust-cell">
                             <span style="font-weight:700;">${esc(r.customer)}</span>
-                            ${hasNote ? `<span class="material-symbols-rounded note-trigger" onclick="viewNote('${r.id}')">description</span>` : ''}
+                            ${hasNotes ? `<span class="material-symbols-rounded note-trigger" onclick="viewNotes('${r.id}')" title="查看備註">description</span>` : ''}
                         </div>
                     </td>
-                    <td><div style="font-size:0.75rem;">${esc(r.product)}</div><span class="sales-tag">${esc(r.salesName)}</span></td>
-                    <td><div style="font-size:0.8rem; color:var(--text-muted);">${esc(r.startDate)} <br>至 ${esc(r.endDate)}</div></td>
-                    <td>
-                        <div style="display:flex; flex-wrap:wrap; gap:4px;">
-                            ${(r.schedule || []).map(s => `
-                                <span class="month-chip ${s.isDone ? 'is-done' : ''} ${s.ym === ym ? 'active' : ''}">
-                                    ${s.ym.slice(5)}月
-                                </span>
-                            `).join('')}
-                        </div>
+                    <td class="col-product"><div>${esc(r.product)}</div><span class="sales-tag">${esc(r.salesName)}</span></td>
+                    <td class="col-period" style="font-size:0.85rem; color:var(--text-muted);">${esc(r.startDate)} ~ ${esc(r.endDate)}</td>
+                    <td class="col-schedule">
+                        <div class="month-group">${(r.schedule || []).map(s => `<span class="month-chip ${s.isDone ? 'is-done' : ''} ${s.ym === ym ? 'active' : ''}">${parseInt(s.ym.slice(5))}月</span>`).join('')}</div>
                     </td>
-                    <td onclick="handleStatusClick('${r.id}', '${ym}')" style="cursor:pointer">
-                        ${sch ? (
-                            sch.isDone 
-                            ? `<span style="color:var(--success); font-weight:600">已完工</span><br><span class="eng-tag">${esc(sch.engName)}</span>` 
-                            : `<span style="color:var(--warning); font-weight:600; display:inline-flex; align-items:center; gap:4px;"><span class="material-symbols-rounded" style="font-size:16px;">priority_high</span>待維護</span>`
-                        ) : '<span style="color:#cbd5e1">--</span>'}
+                    <td class="col-status" onclick="handleStatusClick('${r.id}', '${ym}')" style="cursor:pointer">
+                        ${sch ? (sch.isDone ? `<span style="color:var(--success); font-weight:600">已完工</span>` : `<span style="color:var(--warning); font-weight:600">待維護</span>`) : '--'}
                     </td>
-                    <td>
-                        <div style="display:flex; gap:5px;">
-                            ${sch ? `<button class="btn btn-outline" style="padding:6px; height:34px" onclick="handleStatusClick('${r.id}', '${ym}')"><span class="material-symbols-rounded">${sch.isDone ? 'settings_backup_restore' : 'done_all'}</span></button>` : ''}
-                            ${mode === 'admin' ? `<button class="btn btn-outline" style="padding:6px; height:34px" onclick="openEdit('${r.id}')"><span class="material-symbols-rounded">edit</span></button>` : ''}
+                    <td class="col-action">
+                        <div style="display:flex; gap:4px;">
+                            ${sch ? `<button class="btn btn-outline" style="padding:4px;" onclick="handleStatusClick('${r.id}', '${ym}')"><span class="material-symbols-rounded" style="font-size:18px;">${sch.isDone ? 'history' : 'done'}</span></button>` : ''}
+                            ${mode === 'admin' ? `<button class="btn btn-outline" style="padding:4px;" onclick="openEdit('${r.id}')"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>` : ''}
                         </div>
                     </td>
                 </tr>
             `);
         });
-        document.getElementById('btnNew').style.display = mode === 'admin' ? '' : 'none';
     }
 
-    // --- 3. 功能函式 ---
-    window.viewNote = (id) => {
+    window.viewNotes = (id) => {
         const r = records.find(x => x.id === id);
-        if(!r) return;
-        document.getElementById('noteTitle').textContent = r.customer + " - 備註";
-        document.getElementById('noteContent').innerHTML = r.notes || "無內容";
+        document.getElementById('noteDrawerTitle').textContent = r.customer + ' - 備註紀錄';
+        document.getElementById('noteContent').innerHTML = r.notes;
         document.getElementById('noteDrawer').classList.add('open');
         document.getElementById('overlay').style.display = 'block';
     };
 
     window.openEdit = (id = null) => {
         editingId = id;
-        const r = records.find(x => x.id === id) || { customer: "", product: "ee-class", salesName: "Willa", startDate: "", endDate: "", notes: "", schedule: [] };
-        
-        document.getElementById('drawerTitle').textContent = id ? "編輯客戶" : "新增客戶";
+        const r = records.find(x => x.id === id) || { customer:"", product:"ee-class", salesName:"Willa", startDate:"", endDate:"", notes:"", schedule:[] };
+        document.getElementById('drawerTitle').textContent = id ? "編輯維護" : "新增維護";
         document.getElementById('customer').value = r.customer;
         document.getElementById('product').value = r.product;
-        document.getElementById('salesName').value = r.salesName || "Willa";
+        document.getElementById('salesName').value = r.salesName;
         document.getElementById('startDate').value = r.startDate;
         document.getElementById('endDate').value = r.endDate;
         quill.root.innerHTML = r.notes || "";
         editingYMList = (r.schedule || []).map(s => s.ym).sort();
-        
         renderYMChips();
         document.getElementById('editDrawer').classList.add('open');
         document.getElementById('overlay').style.display = 'block';
         document.getElementById('btnDelete').style.display = id ? 'block' : 'none';
     };
 
-    window.handleStatusClick = (id, ym) => {
-        const r = records.find(x => x.id === id);
-        if (!r) return;
-        const sch = (r.schedule || []).find(s => s.ym === ym);
-        if (!sch) return;
+    window.renderYMChips = () => {
+        document.getElementById('ymList').innerHTML = editingYMList.map(ym => `<span class="editor-mchip">${ym} <span class="remove-btn" onclick="removeYM('${ym}')">×</span></span>`).join('');
+    };
+    window.removeYM = (ym) => { editingYMList = editingYMList.filter(x => x !== ym); renderYMChips(); };
+    window.addYM = () => {
+        const v = document.getElementById('addYMInput').value;
+        if(v && !editingYMList.includes(v)) { editingYMList.push(v); editingYMList.sort(); renderYMChips(); }
+    };
 
-        if (sch.isDone) {
-            if (confirm("確定要恢復為「待維護」嗎？")) {
-                sch.isDone = false;
-                saveAll();
-            }
+    window.handleStatusClick = (id, ym) => {
+        const r = records.find(x => x.id === id), sch = r.schedule.find(s => s.ym === ym);
+        if(!sch) return;
+        if(sch.isDone) {
+            if(confirm("還原為待維護？")) { sch.isDone = false; saveAll(); }
         } else {
             modalTarget = { id, ym };
-            document.getElementById('mTitle').textContent = r.customer + " - 完工回報";
             document.getElementById('mDoneDate').value = new Date().toISOString().slice(0, 10);
             document.getElementById('doneModal').style.display = 'block';
-            document.getElementById('modalOverlay').style.display = 'block';
         }
     };
 
     async function saveAll() {
-        const currentPwd = sessionStorage.getItem('sys_pwd');
-        const urlWithAuth = `${API_URL}&pwd=${encodeURIComponent(currentPwd)}`;
-        try {
-            await fetch(urlWithAuth, { method: "POST", body: JSON.stringify(records) });
-            render();
-        } catch (e) {
-            alert("儲存失敗，請檢查網路");
-        }
+        const pwd = sessionStorage.getItem('sys_pwd');
+        await fetch(`${API_URL}&pwd=${encodeURIComponent(pwd)}`, { method: "POST", body: JSON.stringify(records) });
+        render();
     }
 
-    window.closeAllDrawers = () => {
-        document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
-        document.getElementById('overlay').style.display = 'none';
-    };
+    window.closeAllDrawers = () => { document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open')); document.getElementById('overlay').style.display = 'none'; };
+    window.closeModal = () => { document.getElementById('doneModal').style.display = 'none'; };
 
-    window.closeModal = () => {
-        document.getElementById('doneModal').style.display = 'none';
-        document.getElementById('modalOverlay').style.display = 'none';
-    };
-
-    window.renderYMChips = () => {
-        document.getElementById('ymList').innerHTML = editingYMList.map(ym => `
-            <span class="month-chip active" style="padding:4px 8px; font-size:0.9rem">
-                ${ym} <span style="cursor:pointer;margin-left:5px" onclick="removeYM('${ym}')">×</span>
-            </span>
-        `).join('');
-    };
-
-    window.removeYM = (ym) => {
-        editingYMList = editingYMList.filter(x => x !== ym);
-        renderYMChips();
-    };
-
-    window.addYM = () => {
-        const v = document.getElementById('addYMInput').value;
-        if (v && !editingYMList.includes(v)) {
-            editingYMList.push(v);
-            editingYMList.sort();
-            renderYMChips();
-        }
-    };
-
-    window.recalcSchedule = () => {
-        const start = new Date(document.getElementById('startDate').value);
-        const end = new Date(document.getElementById('endDate').value);
-        if (isNaN(start) || isNaN(end)) return;
-        editingYMList = [];
-        let cur = new Date(start);
-        cur.setMonth(cur.getMonth() + 2); // 第一次維護通常在兩個月後
-        while (cur <= end) {
-            editingYMList.push(cur.toISOString().slice(0, 7));
-            cur.setMonth(cur.getMonth() + 3); // 每三個月一次
-        }
-        renderYMChips();
-    };
-
-    // --- 4. 事件綁定 ---
     document.getElementById('formEdit').onsubmit = async (e) => {
         e.preventDefault();
         const rData = {
@@ -417,40 +398,35 @@
                 return old || { ym, isDone: false, engName: "" };
             })
         };
-        if (!editingId) records.push(rData);
-        else records[records.findIndex(x => x.id === editingId)] = rData;
-        
-        await saveAll();
-        closeAllDrawers();
+        if(!editingId) records.push(rData); else records[records.findIndex(x => x.id === editingId)] = rData;
+        await saveAll(); closeAllDrawers();
     };
 
     document.getElementById('btnConfirmDone').onclick = async () => {
-        if (!modalTarget) return;
         const r = records.find(x => x.id === modalTarget.id);
         const sch = r.schedule.find(s => s.ym === modalTarget.ym);
         sch.isDone = true;
         sch.engName = document.getElementById('mEngName').value;
         sch.doneDate = document.getElementById('mDoneDate').value;
-        await saveAll();
-        closeModal();
+        await saveAll(); closeModal();
     };
 
     document.getElementById('modeSeg').onclick = (e) => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        mode = btn.dataset.mode;
-        document.body.className = 'mode-' + mode;
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-        render();
+        const b = e.target.closest('button'); if(!b) return;
+        mode = b.dataset.mode; updateUIByMode(); render();
+    };
+
+    document.getElementById('btnDelete').onclick = async () => {
+        if(confirm("確定刪除此維護？")) { records = records.filter(x => x.id !== editingId); await saveAll(); closeAllDrawers(); }
     };
 
     document.getElementById('q').oninput = render;
     document.getElementById('monthPick').onchange = render;
     document.getElementById('scope').onchange = render;
     document.getElementById('btnNew').onclick = () => openEdit();
-
-    // 啟動
+    
+    // 啟動載入程序
     load();
-  </script>
+</script>
 </body>
 </html>
