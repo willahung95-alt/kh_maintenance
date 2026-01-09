@@ -297,7 +297,7 @@ async function load() {
         `);
       });
       document.getElementById('btnNew').style.display = mode === 'admin' ? '' : 'none';
-    }
+  }
       document.getElementById('statTotal').textContent = records.length;
       document.getElementById('statDone').textContent = filtered.filter(r => r.schedule?.some(s => s.ym === ym && s.isDone)).length;
       document.getElementById('statTodo').textContent = filtered.filter(r => r.schedule?.some(s => s.ym === ym && !s.isDone)).length;
@@ -415,6 +415,7 @@ async function load() {
   </script>
 </body>
 </html>
+
 
 
 
