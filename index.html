@@ -104,16 +104,20 @@
 </head>
 <body>
 
-  <header>
-    <div class="logo"><span class="material-symbols-rounded">analytics</span> 客戶維護管理系統</div>
-    <div style="display:flex; gap:10px;">
-      <div id="modeSeg" style="display:flex; background:var(--primary-light); padding:4px; border-radius:100px;">
-        <button class="mode-btn btn active" data-mode="user">檢視模式</button>
-        <button class="mode-btn btn" data-mode="admin">管理模式</button>
-      </div>
-      <button id="btnNew" class="btn btn-primary" style="display:none;"><span class="material-symbols-rounded">add</span>新增維護</button>
+<header>
+  <div class="logo">
+    <span class="material-symbols-rounded">analytics</span> 
+    客戶維護管理系統
+    <span id="versionTag" style="display:none; margin-left:8px; font-size:10px; color:var(--text-muted); background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:400;">v6.01091320</span>
+  </div>
+  <div style="display:flex; gap:10px;">
+    <div id="modeSeg" style="display:flex; background:var(--primary-light); padding:4px; border-radius:100px;">
+      <button class="mode-btn btn active" data-mode="user">檢視模式</button>
+      <button class="mode-btn btn" data-mode="admin">管理模式</button>
     </div>
-  </header>
+    <button id="btnNew" class="btn btn-primary" style="display:none;"><span class="material-symbols-rounded">add</span>新增維護</button>
+  </div>
+</header>
 
   <main>
     <div class="stats-row">
