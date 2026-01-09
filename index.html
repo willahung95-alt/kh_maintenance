@@ -332,7 +332,18 @@ async function load() {
       sch.isDone = true; sch.engName = document.getElementById('mEngName').value; sch.doneDate = document.getElementById('mDoneDate').value;
       saveAll(); closeModal();
     };
-    async function saveAll() { await fetch(API_URL, { method: "POST", body: JSON.stringify(records) }); render(); }
+    async function saveAll() { 
+      // 取得目前 session 中的密碼
+      const currentPwd = sessionStorage.getItem('sys_pwd');
+      // 在原本帶 token 的網址後面，再補上密碼參數
+      const urlWithAuth = `${API_URL}&pwd=${encodeURIComponent(currentPwd)}`;
+      
+      await fetch(urlWithAuth, { 
+        method: "POST", 
+        body: JSON.stringify(records) 
+      }); 
+      render(); 
+    }
     function closeModal() { document.getElementById('doneModal').style.display = 'none'; document.getElementById('modalOverlay').style.display = 'none'; }
     document.getElementById('modeSeg').onclick = (e) => {
       const b = e.target.closest('button'); if(!b) return; mode = b.dataset.mode;
@@ -363,5 +374,6 @@ async function load() {
   </script>
 </body>
 </html>
+
 
 
