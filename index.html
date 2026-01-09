@@ -127,7 +127,7 @@
           <tr>
             <th>客戶名稱</th>
             <th>產品 / 業務</th>
-            <th>維護週期</th>
+            <th>維護期間</th> <th>維護週期</th>
             <th>狀態 / 工程師</th>
             <th>操作</th>
           </tr>
@@ -251,12 +251,52 @@ async function load() {
       const q = document.getElementById('q').value.toLowerCase();
       const scope = document.getElementById('scope').value;
       
-      const filtered = records.filter(r => {
+      // 1. 過濾資料
+      let filtered = records.filter(r => {
         const hasSch = (r.schedule || []).some(s => s.ym === ym);
         const textMatch = !q || r.customer.toLowerCase().includes(q) || (r.salesName||'').toLowerCase().includes(q);
         return (scope === 'need' ? hasSch : true) && textMatch;
       });
 
+      // 2. 排序邏輯：依照客戶名稱排序，讓相同客戶排在一起
+      filtered.sort((a, b) => (a.customer || "").localeCompare((b.customer || ""), 'zh-Hant'));
+
+      // 3. 更新統計數據
+      document.getElementById('statTotal').textContent = records.length;
+      document.getElementById('statDone').textContent = filtered.filter(r => r.schedule?.some(s => s.ym === ym && s.isDone)).length;
+      document.getElementById('statTodo').textContent = filtered.filter(r => r.schedule?.some(s => s.ym === ym && !s.isDone)).length;
+      
+      const tbody = document.getElementById('rows');
+      tbody.innerHTML = '';
+      
+      // 4. 產生表格列
+      filtered.forEach(r => {
+        const sch = (r.schedule || []).find(s => s.ym === ym);
+        const hasNote = r.notes && r.notes.replace(/<[^>]*>/g, '').trim().length > 0;
+        
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center;">
+                <span style="font-weight:700;">${esc(r.customer)}</span>
+                ${hasNote ? `<span class="material-symbols-rounded note-trigger" onclick="viewNote('${r.id}')">description</span>` : ''}
+              </div>
+            </td>
+            <td><div style="font-size:0.75rem;">${esc(r.product)}</div><span class="sales-tag">${esc(r.salesName)}</span></td>
+            
+            <td>
+              <div style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;">
+                ${esc(r.startDate)} <br>至 ${esc(r.endDate)}
+              </div>
+            </td>
+
+            <td>${(r.schedule || []).map(s => `<span class="month-chip ${s.isDone?'is-done':''} ${s.ym===ym?'active':''}">${s.ym.slice(5)}月</span>`).join('')}</td>
+            <td onclick="handleStatusClick('${r.id}', '${ym}')" style="cursor:pointer">${sch ? (sch.isDone ? `<span style="color:var(--success); font-weight:600">已完工</span><br><span class="eng-tag">${esc(sch.engName)}</span>` : `<span style="color:var(--warning); font-weight:600; display:inline-flex; align-items:center; gap:4px;"><span class="material-symbols-rounded" style="font-size:16px;">priority_high</span>待維護</span>`) : '--'}</td>
+            <td><div style="display:flex; gap:5px;">${sch ? `<button class="btn btn-outline" style="padding:6px; height:34px" onclick="handleStatusClick('${r.id}', '${ym}')"><span class="material-symbols-rounded">${sch.isDone?'settings_backup_restore':'done_all'}</span></button>` : ''}${mode==='admin' ? `<button class="btn btn-outline" style="padding:6px; height:34px" onclick="openEdit('${r.id}')"><span class="material-symbols-rounded">edit</span></button>` : ''}</div></td>
+          </tr>
+        `);
+      });
+      document.getElementById('btnNew').style.display = mode === 'admin' ? '' : 'none';}
       document.getElementById('statTotal').textContent = records.length;
       document.getElementById('statDone').textContent = filtered.filter(r => r.schedule?.some(s => s.ym === ym && s.isDone)).length;
       document.getElementById('statTodo').textContent = filtered.filter(r => r.schedule?.some(s => s.ym === ym && !s.isDone)).length;
@@ -374,6 +414,7 @@ async function load() {
   </script>
 </body>
 </html>
+
 
 
 
