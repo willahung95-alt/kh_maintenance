@@ -198,44 +198,51 @@
     const esc = (s) => String(s || "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     
 async function load() {
-      // 1. 檢查本機 Session 是否存過密碼，沒有就詢問
+      // 1. 取得密碼
       let pwd = sessionStorage.getItem('sys_pwd');
       if (!pwd) {
         pwd = prompt("🔒 此為私人系統，請輸入存取密碼：");
       }
 
-      // 如果使用者按下取消或沒輸入，則不顯示內容
       if (!pwd) {
-        document.body.innerHTML = "<div style='text-align:center; margin-top:100px; font-family:sans-serif;'><h2>存取受阻</h2><p>請輸入密碼以檢視內容。</p><button onclick='location.reload()' style='padding:10px 20px; cursor:pointer;'>重新輸入</button></div>";
+        document.body.innerHTML = "<div style='text-align:center; margin-top:100px;'><h2>請輸入密碼以檢視內容。</h2><button onclick='location.reload()'>重新輸入</button></div>";
         document.body.style.display = "block";
         return;
       }
 
       try {
-        // 2. 修改抓取邏輯：在網址後面加上 ?pwd=...
-        // 這樣 GAS 後端才能收到密碼進行比對
-        const resp = await fetch(`${API_URL}?pwd=${encodeURIComponent(pwd)}`);
+        // 2. 請求資料 (注意這裡改成了 &pwd=，因為您的 API_URL 已經有 ?token=...)
+        const resp = await fetch(`${API_URL}&pwd=${encodeURIComponent(pwd)}`);
         const data = await resp.json();
         
-        // 3. 檢查後端回傳的狀態 (假設您的 GAS 密碼錯誤時會回傳 {status: "error"})
-        if (data.status === "error") {
-          alert("密碼錯誤，請重新嘗試");
+        // 3. 檢查回傳格式
+        if (data && data.status === "error") {
+          alert("密碼錯誤，請重新輸入");
           sessionStorage.removeItem('sys_pwd');
-          location.reload(); 
+          location.reload();
           return;
         }
 
-        // 4. 驗證成功：存入 Session 並顯示內容
+        // 4. 驗證成功處理
         sessionStorage.setItem('sys_pwd', pwd);
-        document.body.style.display = "block"; // 顯示頁面
+        document.body.style.display = "block";
 
-        // 5. 處理資料 (保留您原本的邏輯)
-        records = data.map(r => ({ ...r, salesName: r.salesName || "Willa" }));
+        // 5. 解析資料 (A1 儲存的是 JSON 陣列)
+        let finalData = Array.isArray(data) ? data : [];
+        
+        // 統一將業務設為 Willa (除非原本就有填)
+        records = finalData.map(r => ({ 
+          ...r, 
+          salesName: r.salesName || "Willa" 
+        }));
+        
+        console.log("資料載入成功，共 " + records.length + " 筆");
         render(); 
 
       } catch (e) {
         console.error("載入失敗:", e);
-        alert("資料載入失敗，可能密碼錯誤或 API 設定有誤。");
+        // 如果連線成功但解析失敗，可能是 GAS 那邊沒處理好 token 或密碼邏輯
+        alert("資料載入失敗，請檢查網路或密碼。");
       }
     }
 
@@ -356,4 +363,5 @@ async function load() {
   </script>
 </body>
 </html>
+
 
