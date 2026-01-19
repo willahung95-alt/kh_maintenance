@@ -15,9 +15,7 @@
       --primary: #4361ee; --primary-light: #eef2ff; --success: #10b981;
       --success-light: #e8f7f0; --success-dark: #065f46;
       --warning: #f59e0b; --danger: #ef4444; 
-      --text-main: #1e293b; 
-      --text-muted: #64748b; 
-      --text-soft: #334155;
+      --text-main: #1e293b; --text-muted: #64748b; --text-soft: #334155;
       --bg-body: #f8fafc; --card-bg: #ffffff;
       --border: #e2e8f0; --radius-lg: 16px; --radius-md: 12px;
       --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
@@ -28,12 +26,7 @@
     header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; }
     .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.25rem; color: var(--primary); }
     
-    /* 版本號樣式優化 */
-    #versionTag { 
-      margin-left: 8px; font-size: 11px; color: var(--primary); background: var(--primary-light); 
-      padding: 3px 8px; border-radius: 20px; font-weight: 600; cursor: pointer; 
-      border: 1px solid transparent; transition: 0.2s; user-select: none;
-    }
+    #versionTag { margin-left: 8px; font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 3px 8px; border-radius: 20px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: 0.2s; user-select: none; }
     #versionTag:hover { border-color: var(--primary); box-shadow: 0 2px 4px rgba(67, 97, 238, 0.2); transform: translateY(-1px); }
 
     main { max-width: 1550px; margin: 1.5rem auto; padding: 0 1rem; }
@@ -41,7 +34,6 @@
     .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; }
     .stat-card { background: var(--card-bg); padding: 1.25rem; border-radius: var(--radius-lg); box-shadow: var(--shadow); display: flex; align-items: center; gap: 1rem; border: 1px solid var(--border); }
     .stat-icon { width: 50px; height: 50px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .stat-icon .material-symbols-rounded { font-size: 28px; }
     .stat-info .stat-label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2px; font-weight: 500; }
     .stat-info .stat-value { font-size: 2.2rem; font-weight: 800; line-height: 1; color: var(--text-soft); letter-spacing: -1px; }
 
@@ -59,41 +51,24 @@
     td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     
     .col-customer { width: 18%; }
-    .col-product  { width: 12%; }
+    .col-product  { width: 16%; }
     .col-period   { width: 15%; }
-    .col-schedule { width: 34%; } 
+    .col-schedule { width: 30%; } 
     .col-status   { width: 11%; }
     .col-action   { width: 10%; }
     th.col-action { text-align: right; padding-right: 24px; }
 
-    .sales-tag { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; display: inline-block; margin-top: 4px; }
+    .sales-tag { background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; display: inline-block; margin-top: 4px; margin-right: 4px; }
+    .engineer-tag { background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; display: inline-block; margin-top: 4px; }
     
     .month-group { display: flex; flex-wrap: wrap; gap: 3px; }
     .month-chip { padding: 2px 4px; border-radius: 3px; font-size: 11px; background: #f1f5f9; color: var(--text-muted); border: 1px solid var(--border); min-width: 32px; text-align: center; }
     .month-chip.is-done { background: var(--success-light); color: var(--success-dark); border-color: #a7f3d0; }
     .month-chip.active { border: 1.5px solid var(--primary); font-weight: 700; color: var(--primary); background: #fff; }
 
-    .done-status-box { 
-        background: var(--success-light); 
-        color: var(--success-dark); 
-        padding: 6px 12px; 
-        border-radius: 8px; 
-        display: inline-flex;
-        flex-direction: column;
-        border: 1px solid #c6f6d5;
-        min-width: 105px;
-    }
-    .done-status-box .status-title { 
-        font-size: 1rem; 
-        font-weight: 800; 
-        display: flex; align-items: center; gap: 4px;
-    }
-    .done-status-box .status-meta { 
-        font-size: 11px; 
-        opacity: 0.85; 
-        font-weight: 500;
-        white-space: nowrap; 
-    }
+    .done-status-box { background: var(--success-light); color: var(--success-dark); padding: 6px 12px; border-radius: 8px; display: inline-flex; flex-direction: column; border: 1px solid #c6f6d5; min-width: 105px; }
+    .done-status-box .status-title { font-size: 1rem; font-weight: 800; display: flex; align-items: center; gap: 4px; }
+    .done-status-box .status-meta { font-size: 11px; opacity: 0.85; font-weight: 500; white-space: nowrap; }
 
     .note-indicator { color: #94a3b8; cursor: pointer; margin-left: 6px; vertical-align: middle; font-size: 18px; }
 
@@ -106,10 +81,7 @@
     .ym-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
     .ym-tag { background: white; border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
 
-    /* Quill 編輯器高度調整 */
     #editor-container { height: 350px; font-size: 16px; }
-    
-    /* 閱讀模式下的內容樣式 */
     #note-viewer { line-height: 1.6; color: var(--text-main); }
     #note-viewer ul, #note-viewer ol { padding-left: 20px; }
     #note-viewer blockquote { border-left: 4px solid #ccc; margin-left: 0; padding-left: 10px; color: #666; }
@@ -121,7 +93,7 @@
   <div class="logo">
     <span class="material-symbols-rounded">analytics</span> 
     客戶維護管理系統
-    <span id="versionTag" onclick="openSystemLog('view')" title="點擊查看更新日誌">v6.01091700</span>
+    <span id="versionTag" onclick="openSystemLog('view')" title="點擊查看更新日誌">v6.260119</span>
   </div>
   <div style="display:flex; gap:10px;">
     <div id="modeSeg" style="display:flex; background:var(--primary-light); padding:4px; border-radius:100px;">
@@ -158,7 +130,7 @@
     <div class="controls">
       <div class="search-wrapper">
         <span class="material-symbols-rounded" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted);">search</span>
-        <input type="text" id="q" placeholder="搜尋客戶名稱、業務、產品..." style="width:100%; padding:10px 16px 10px 40px; border-radius:var(--radius-md); border:1px solid var(--border); outline:none;">
+        <input type="text" id="q" placeholder="搜尋客戶名稱、業務、產品、工程師..." style="width:100%; padding:10px 16px 10px 40px; border-radius:var(--radius-md); border:1px solid var(--border); outline:none;">
       </div>
       <input type="month" id="monthPick" class="btn btn-outline">
       <select id="scope" class="btn btn-outline">
@@ -172,7 +144,7 @@
         <thead>
           <tr>
             <th class="col-customer">客戶名稱</th>
-            <th class="col-product">產品 / 業務</th>
+            <th class="col-product">產品 / 業務 / 維護工程師</th> 
             <th class="col-period">維護期間</th>
             <th class="col-schedule">全期進度</th>
             <th class="col-status">狀態</th>
@@ -194,10 +166,46 @@
     <form id="formEdit">
       <div id="adminOnlyFields">
         <div style="margin-bottom:12px;"><label style="font-size:0.85rem; font-weight:600;">客戶名稱</label><input type="text" id="customer" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;" required></div>
+        
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-          <div><label style="font-size:0.85rem;">產品</label><select id="product" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);"><option value="ee-class">ee-class</option><option value="Adobe Connect">Adobe Connect</option><option value="km+">km+</option><option value="tms+">tms+</option><option value="i-reporter">i-reporter</option></select></div>
-          <div><label style="font-size:0.85rem;">業務</label><select id="salesName" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);"><option value="Willa">Willa</option><option value="Melissa">Melissa</option><option value="Anita">Anita</option></select></div>
+          <div>
+            <label style="font-size:0.85rem;">產品</label>
+            <select id="product" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);">
+                <option value="ee-class">ee-class</option>
+                <option value="Adobe Connect">Adobe Connect</option>
+                <option value="km+">km+</option>
+                <option value="tms+">tms+</option>
+                <option value="i-reporter">i-reporter</option>
+                <option value="HyperPDM">HyperPDM</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.85rem;">業務</label>
+            <select id="salesName" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);">
+                <option value="Willa">Willa</option>
+                <option value="Melissa">Melissa</option>
+                <option value="Anita">Anita</option>
+                <option value="Mandy">Mandy</option>
+                <option value="Annie">Annie</option>
+                <option value="Emerald">Emerald</option>
+                <option value="Anyen">Anyen</option>
+                <option value="Jenny">Jenny</option>
+            </select>
+          </div>
         </div>
+
+        <div style="margin-bottom:12px;">
+            <label style="font-size:0.85rem;">維護工程師</label>
+            <select id="engineer" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);">
+                <option value="">請選擇</option>
+                <option value="Willa">Willa</option>
+                <option value="Charlie">Charlie</option>
+                <option value="Lindsay">Lindsay</option>
+                <option value="Johnson">Johnson</option>
+                <option value="Isaac">Isaac</option>
+            </select>
+        </div>
+
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
           <div><label style="font-size:0.85rem;">維護起日</label><input type="date" id="startDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);" onchange="handleDateChange()"></div>
           <div><label style="font-size:0.85rem;">維護訖日</label><input type="date" id="endDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
@@ -228,108 +236,51 @@
   <div class="modal" id="doneModal">
     <h3 style="margin-top:0;">完工申報</h3>
     <div style="margin-bottom:10px;"><label>實際完工日</label><input type="date" id="mDoneDate" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;"></div>
-    <div style="margin-bottom:15px;"><label>維護工程師</label><select id="mEngName" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;"><option value="Willa">Willa</option><option value="Charlie">Charlie</option></select></div>
+    <div style="margin-bottom:15px;"><label>維護工程師 (執行者)</label><select id="mEngName" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:8px;"><option value="Willa">Willa</option><option value="Charlie">Charlie</option><option value="Lindsay">Lindsay</option><option value="Johnson">Johnson</option><option value="Isaac">Isaac</option></select></div>
     <div style="display:flex; gap:10px;"><button id="mSave" class="btn btn-primary" style="flex:1;">提交</button><button onclick="closeModal()" class="btn btn-outline" style="flex:1;">取消</button></div>
   </div>
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbznmfZ1quMslZxY6dftt_83uYqUGTh9THmoIO4LdFx7O9CPl0eKn2vvLP0YqM9nv2jf/exec?token=otsukakh5501398";
   const ADMIN_PASSWORD = "admin5501398";
-  const VERSION_ID = "SYSTEM_LOG_v6"; // 特殊 ID
+  const VERSION_ID = "SYSTEM_LOG_v6"; 
 
   let records = [], mode = "user", editingId = null, quill, modalTarget = null, editingYMList = [];
-  // 全域變數存放系統日誌，預設為空
-  let systemLog = { id: VERSION_ID, notes: '尚無更新紀錄' };
+  let systemLogs = []; 
 
   async function load() {
     let pwd = sessionStorage.getItem('sys_pwd') || prompt("🔒 請輸入系統密碼：");
     if (!pwd) { location.reload(); return; }
     try {
       const resp = await fetch(`${API_URL}&pwd=${encodeURIComponent(pwd)}`);
-      const data = await resp.json();
-      if (data.status === "error") { sessionStorage.removeItem('sys_pwd'); location.reload(); return; }
-      sessionStorage.setItem('sys_pwd', pwd);
+      const result = await resp.json();
       
-      // === 核心邏輯：分離客戶資料與系統日誌 ===
-      const logIndex = data.findIndex(r => r.id === VERSION_ID);
-      if (logIndex >= 0) {
-        systemLog = data[logIndex]; // 抓出日誌
-        data.splice(logIndex, 1);   // 從列表中移除，以免干擾表格
+      if (result.status === "error") { 
+        sessionStorage.removeItem('sys_pwd'); 
+        location.reload(); 
+        return; 
       }
-      records = data; 
-      // ===================================
+      
+      sessionStorage.setItem('sys_pwd', pwd);
+
+      // --- 修正：適應新的 GAS 回傳格式 { records: [], logs: [] } ---
+      if (result.records) {
+         records = result.records;
+         systemLogs = result.logs || [];
+      } else if (Array.isArray(result)) {
+         // 向下相容舊格式 (以防萬一)
+         const data = result;
+         const logIdx = data.findIndex(r => r.id === VERSION_ID);
+         if (logIdx >= 0) data.splice(logIdx, 1);
+         records = data; 
+      }
       
       document.body.style.display = "block"; 
       render();
-    } catch (e) { alert("連線失敗，請檢查網路。"); }
-  }
-
-  // 開啟系統日誌 (共用側邊欄)
-  // action: 'view' (點版本號, 唯讀) | 'edit' (管理員, 可編輯)
-  function openSystemLog(action) {
-    editingId = VERSION_ID;
-    
-    // 1. 設定標題
-    document.getElementById('drawerTitle').textContent = "系統更新日誌";
-    
-    // 2. 隱藏不相關欄位
-    document.getElementById('adminOnlyFields').style.display = 'none';
-    document.getElementById('btnDelete').style.display = 'none';
-    document.getElementById('noteLabel').textContent = "日誌內容";
-
-    // 3. 根據模式設定編輯器狀態
-    if (action === 'view') {
-        document.getElementById('adminAction').style.display = 'none'; // 隱藏儲存按鈕
-        document.getElementById('editor-wrapper').style.display = 'none';
-        document.getElementById('note-viewer').style.display = 'block';
-        document.getElementById('note-viewer').innerHTML = systemLog.notes || '<div style="text-align:center;color:#999;padding:20px;">尚無紀錄</div>';
-    } else {
-        document.getElementById('adminAction').style.display = 'block'; // 顯示儲存按鈕
-        document.getElementById('editor-wrapper').style.display = 'block';
-        document.getElementById('note-viewer').style.display = 'none';
-        quill.root.innerHTML = systemLog.notes || "";
+    } catch (e) { 
+        alert("連線失敗，請檢查網路。"); 
+        console.error(e);
     }
-
-    // 4. 開啟
-    document.getElementById('drawer').classList.add('open');
-    document.getElementById('overlay').style.display = 'block';
-  }
-
-  function handleDateChange() {
-    const startVal = document.getElementById('startDate').value;
-    if(!startVal) return;
-    const startDate = new Date(startVal);
-    const endDate = new Date(startVal);
-    endDate.setFullYear(startDate.getFullYear() + 1);
-    endDate.setDate(endDate.getDate() - 1);
-    document.getElementById('endDate').value = endDate.toISOString().slice(0, 10);
-    editingYMList = [];
-    [3, 6, 9, 12].forEach(offset => {
-      const d = new Date(startDate.getFullYear(), startDate.getMonth() + offset, 1);
-      editingYMList.push(d.toISOString().slice(0, 7));
-    });
-    renderYMList();
-  }
-
-  function addYM() {
-    const val = document.getElementById('manualYM').value;
-    if(val && !editingYMList.includes(val)) {
-      editingYMList.push(val);
-      editingYMList.sort();
-      renderYMList();
-    }
-  }
-
-  function removeYM(ym) {
-    editingYMList = editingYMList.filter(x => x !== ym);
-    renderYMList();
-  }
-
-  function renderYMList() {
-    const container = document.getElementById('ymList');
-    container.innerHTML = editingYMList.map(ym => `
-      <div class="ym-tag">${ym} <span onclick="removeYM('${ym}')" style="cursor:pointer; color:var(--danger); font-weight:bold;">×</span></div>
-    `).join('');
   }
 
   function render() {
@@ -339,7 +290,7 @@
     const scope = document.getElementById('scope').value;
 
     const filtered = records.filter(r => {
-      const match = !q || r.customer.toLowerCase().includes(q) || (r.salesName||"").toLowerCase().includes(q) || r.product.toLowerCase().includes(q);
+      const match = !q || r.customer.toLowerCase().includes(q) || (r.salesName||"").toLowerCase().includes(q) || (r.engineer||"").toLowerCase().includes(q) || r.product.toLowerCase().includes(q);
       const hasSch = (r.schedule || []).some(s => s.ym === ym);
       return (scope === 'need' ? hasSch : true) && match;
     }).sort((a,b) => a.customer.localeCompare(b.customer, 'zh-Hant'));
@@ -347,11 +298,9 @@
     document.getElementById('statTotal').textContent = records.length;
     const doneCount = records.filter(r => r.schedule?.some(s => s.ym === ym && (s.isDone || s.ym < currentYM))).length;
     const todoCount = records.filter(r => r.schedule?.some(s => s.ym === ym && (!s.isDone && s.ym >= currentYM))).length;
-    const rate = (doneCount + todoCount) > 0 ? Math.round((doneCount / (doneCount + todoCount)) * 100) : 0;
-
     document.getElementById('statDone').textContent = doneCount;
     document.getElementById('statTodo').textContent = todoCount;
-    document.getElementById('statRate').textContent = rate + "%";
+    document.getElementById('statRate').textContent = (doneCount + todoCount) > 0 ? Math.round((doneCount / (doneCount + todoCount)) * 100) + "%" : "0%";
 
     const tbody = document.getElementById('rows');
     tbody.innerHTML = '';
@@ -360,10 +309,16 @@
       const sch = (r.schedule || []).find(s => s.ym === ym);
       const hasNotes = r.notes && r.notes !== '<p><br></p>';
       
+      const salesTag = r.salesName ? `<span class="sales-tag" title="業務">${r.salesName}</span>` : '';
+      const engTag = r.engineer ? `<span class="engineer-tag" title="維護工程師">${r.engineer}</span>` : '';
+
       tbody.insertAdjacentHTML('beforeend', `
         <tr>
           <td><span style="font-weight:700;">${r.customer}</span>${hasNotes ? `<span class="material-symbols-rounded note-indicator" onclick="openEdit('${r.id}', true)">description</span>` : ''}</td>
-          <td><div style="font-size:0.8rem; color:var(--text-muted);">${r.product}</div><span class="sales-tag">${r.salesName}</span></td>
+          <td>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">${r.product}</div>
+            <div>${salesTag}${engTag}</div> 
+          </td>
           <td style="font-size:0.85rem; color:var(--text-muted);">${r.startDate} ~ ${r.endDate}</td>
           <td>
             <div class="month-group">
@@ -392,48 +347,8 @@
     });
   }
 
-  function openEdit(id = null, forceReadOnly = false) {
-    // === 重要：重置欄位顯示 (因為 openSystemLog 會隱藏它們) ===
-    document.getElementById('adminOnlyFields').style.display = 'block'; 
-    document.getElementById('adminAction').style.display = 'block';
-    // ======================================================
-
-    editingId = id;
-    const r = records.find(x => x.id === id) || { customer:"", product:"ee-class", salesName:"Willa", startDate:"", endDate:"", notes:"", schedule: [] };
-    const isViewOnly = forceReadOnly || mode === 'user';
-    
-    // 使用者模式只能看備註
-    document.getElementById('adminOnlyFields').style.display = isViewOnly ? 'none' : 'block';
-    document.getElementById('adminAction').style.display = isViewOnly ? 'none' : 'block';
-    document.getElementById('btnDelete').style.display = (isViewOnly || !id) ? 'none' : 'block';
-    document.getElementById('noteLabel').textContent = "維護備註";
-    document.getElementById('drawerTitle').textContent = isViewOnly ? "備註內容" : (id ? "編輯維護" : "新增維護");
-    
-    if(isViewOnly) {
-      document.getElementById('editor-wrapper').style.display = 'none';
-      document.getElementById('note-viewer').style.display = 'block';
-      document.getElementById('note-viewer').innerHTML = r.notes || '<span style="color:#94a3b8">尚無備註</span>';
-    } else {
-      document.getElementById('editor-wrapper').style.display = 'block';
-      document.getElementById('note-viewer').style.display = 'none';
-      quill.root.innerHTML = r.notes || "";
-    }
-    
-    document.getElementById('customer').value = r.customer || "";
-    document.getElementById('product').value = r.product || "ee-class";
-    document.getElementById('salesName').value = r.salesName || "Willa";
-    document.getElementById('startDate').value = r.startDate || "";
-    document.getElementById('endDate').value = r.endDate || "";
-    editingYMList = (r.schedule || []).map(s => s.ym);
-    renderYMList();
-    document.getElementById('drawer').classList.add('open');
-    document.getElementById('overlay').style.display = 'block';
-  }
-
-  // === 強化版 Save 函式：包含 Timeout 與 錯誤處理 ===
   async function save() {
-    // 鎖定按鈕避免連點
-    const btn = document.querySelector('#formEdit .btn-primary'); 
+    const btn = document.querySelector('#formEdit .btn-primary');
     const mSaveBtn = document.getElementById('mSave');
     let activeBtn = null;
     let originalText = "";
@@ -449,34 +364,50 @@
 
     try {
       const pwd = sessionStorage.getItem('sys_pwd');
-      // 設定 30 秒逾時
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      // 合併 客戶列表 + 系統日誌 一起存
-      const payload = [...records, systemLog];
+      
+      let payload;
+      
+      // --- 修正：區分「客戶資料」與「日誌」的儲存 payload ---
+      if (editingId === VERSION_ID) {
+          // 新增日誌
+          // 這裡簡單使用當前時間作為版本號或讓使用者自行輸入，這裡暫時自動生成或固定
+          // 如果要讓使用者輸入版本號，需要在 HTML 增加輸入框
+          // 目前邏輯：將編輯器的內容存為新日誌
+          payload = { 
+            action: "addLog", 
+            data: { 
+                version: "v" + new Date().toISOString().slice(2,10).replace(/-/g,''), 
+                content: quill.root.innerHTML,
+                author: "Admin" 
+            } 
+          };
+      } else {
+          // 儲存客戶資料 (只傳 records 陣列)
+          payload = records; 
+      }
 
       const resp = await fetch(`${API_URL}&pwd=${encodeURIComponent(pwd)}`, { 
         method: "POST", 
         body: JSON.stringify(payload),
         signal: controller.signal
       });
-      
       clearTimeout(timeoutId);
 
-      // 如果 API 回傳 ok (200)，但不一定是業務邏輯成功
       if (!resp.ok) throw new Error("Network response was not ok");
-      
       const result = await resp.json();
       if (result.result === "error") throw new Error(result.message);
 
-      // 儲存成功，重新渲染
-      render();
-
+      if(editingId === VERSION_ID) {
+        alert("日誌發佈成功！");
+        location.reload(); // 重新讀取以顯示最新日誌
+      } else {
+        render(); // 重新渲染列表
+      }
+      
     } catch (e) {
-      console.error(e);
-      // 就算 Timeout 其實通常也存進去了，提示使用者重新整理
-      alert("儲存程序已執行，但回應逾時或發生錯誤。\n請重新整理頁面確認資料是否正確更新。\n(若資料已更新，請忽略此訊息)");
+      alert("儲存程序已執行，但回應逾時或發生錯誤。\n請重新整理頁面確認資料是否正確更新。");
     } finally {
       if (activeBtn) {
           activeBtn.innerText = originalText;
@@ -485,26 +416,109 @@
     }
   }
 
+  function handleDateChange() {
+    const startVal = document.getElementById('startDate').value;
+    if(!startVal) return;
+    const startDate = new Date(startVal);
+    const endDate = new Date(startVal);
+    endDate.setFullYear(startDate.getFullYear() + 1);
+    endDate.setDate(endDate.getDate() - 1);
+    document.getElementById('endDate').value = endDate.toISOString().slice(0, 10);
+    editingYMList = [3, 6, 9, 12].map(offset => {
+      const d = new Date(startDate.getFullYear(), startDate.getMonth() + offset, 1);
+      return d.toISOString().slice(0, 7);
+    });
+    renderYMList();
+  }
+
+  function addYM() {
+    const val = document.getElementById('manualYM').value;
+    if(val && !editingYMList.includes(val)) { editingYMList.push(val); editingYMList.sort(); renderYMList(); }
+  }
+  function removeYM(ym) { editingYMList = editingYMList.filter(x => x !== ym); renderYMList(); }
+  function renderYMList() {
+    document.getElementById('ymList').innerHTML = editingYMList.map(ym => `
+      <div class="ym-tag">${ym} <span onclick="removeYM('${ym}')" style="cursor:pointer; color:var(--danger); font-weight:bold;">×</span></div>
+    `).join('');
+  }
+
+  function openEdit(id = null, forceReadOnly = false) {
+    document.getElementById('adminOnlyFields').style.display = 'block';
+    document.getElementById('adminAction').style.display = 'block';
+    editingId = id;
+    const r = records.find(x => x.id === id) || { customer:"", product:"ee-class", salesName:"Willa", engineer:"", startDate:"", endDate:"", notes:"", schedule: [] };
+    const isViewOnly = forceReadOnly || mode === 'user';
+    
+    document.getElementById('adminOnlyFields').style.display = isViewOnly ? 'none' : 'block';
+    document.getElementById('adminAction').style.display = isViewOnly ? 'none' : 'block';
+    document.getElementById('btnDelete').style.display = (isViewOnly || !id) ? 'none' : 'block';
+    document.getElementById('drawerTitle').textContent = isViewOnly ? "備註內容" : (id ? "編輯維護" : "新增維護");
+    
+    if(isViewOnly) {
+      document.getElementById('editor-wrapper').style.display = 'none';
+      document.getElementById('note-viewer').style.display = 'block';
+      document.getElementById('note-viewer').innerHTML = r.notes || "尚無備註";
+    } else {
+      document.getElementById('editor-wrapper').style.display = 'block';
+      document.getElementById('note-viewer').style.display = 'none';
+      quill.root.innerHTML = r.notes || "";
+    }
+    
+    document.getElementById('customer').value = r.customer || "";
+    document.getElementById('product').value = r.product || "ee-class";
+    document.getElementById('salesName').value = r.salesName || "Willa";
+    document.getElementById('engineer').value = r.engineer || "";
+    document.getElementById('startDate').value = r.startDate || "";
+    document.getElementById('endDate').value = r.endDate || "";
+    editingYMList = (r.schedule || []).map(s => s.ym);
+    renderYMList();
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('overlay').style.display = 'block';
+  }
+
+  function openSystemLog(action) {
+    editingId = VERSION_ID;
+    document.getElementById('drawerTitle').textContent = "系統更新日誌";
+    document.getElementById('adminOnlyFields').style.display = 'none';
+    document.getElementById('btnDelete').style.display = 'none';
+    
+    // 取得最新日誌內容 (如果有的話)
+    const latestContent = (systemLogs.length > 0) ? systemLogs[0].content : "尚無紀錄";
+
+    if (action === 'view') {
+        document.getElementById('adminAction').style.display = 'none';
+        document.getElementById('editor-wrapper').style.display = 'none';
+        document.getElementById('note-viewer').style.display = 'block';
+        document.getElementById('note-viewer').innerHTML = latestContent;
+    } else {
+        document.getElementById('adminAction').style.display = 'block';
+        document.getElementById('editor-wrapper').style.display = 'block';
+        document.getElementById('note-viewer').style.display = 'none';
+        // 編輯模式：這裡預設是新增，所以清空，或您可以選擇帶入舊內容
+        quill.root.innerHTML = ""; 
+        quill.root.dataset.placeholder = "請輸入新版本更新內容...";
+    }
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('overlay').style.display = 'block';
+  }
+
   document.getElementById('formEdit').onsubmit = async (e) => {
     e.preventDefault();
     const currentYM = new Date().toISOString().slice(0, 7);
-
-    // === 判斷是否為編輯系統日誌 ===
+    
+    // 如果是日誌編輯，直接儲存 (邏輯在 save() 內處理)
     if (editingId === VERSION_ID) {
-        systemLog.notes = quill.root.innerHTML;
-        // 直接執行儲存，不需處理下方客戶邏輯
-        await save();
-        closeDrawer();
+        await save(); 
+        closeDrawer(); 
         return;
     }
-    // =============================
     
-    // 一般客戶資料處理
     const rData = {
       id: editingId || 'ID-' + Date.now(),
       customer: document.getElementById('customer').value,
       product: document.getElementById('product').value,
       salesName: document.getElementById('salesName').value,
+      engineer: document.getElementById('engineer').value,
       startDate: document.getElementById('startDate').value,
       endDate: document.getElementById('endDate').value,
       notes: quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML,
@@ -515,12 +529,9 @@
         return { ym, isDone: isPast, doneDate: isPast ? currentYM : "", engName: isPast ? "Auto" : "" };
       })
     };
-
     const idx = records.findIndex(x => x.id === rData.id);
     if (idx !== -1) records[idx] = rData; else records.push(rData);
-    
-    await save(); 
-    closeDrawer();
+    await save(); closeDrawer();
   };
 
   function toggleDone(id, ym) {
@@ -539,10 +550,7 @@
 
   function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').style.display = 'none'; closeModal(); }
   function closeModal() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); document.getElementById('overlay').style.display = 'none'; }
-
-  document.getElementById('btnDelete').onclick = async () => {
-    if(confirm("確定刪除此客戶？")) { records = records.filter(x => x.id !== editingId); await save(); closeDrawer(); }
-  };
+  document.getElementById('btnDelete').onclick = async () => { if(confirm("確定刪除此客戶？")) { records = records.filter(x => x.id !== editingId); await save(); closeDrawer(); } };
 
   document.getElementById('mSave').onclick = async () => {
     const r = records.find(x => x.id === modalTarget.id);
@@ -555,9 +563,7 @@
 
   document.getElementById('modeSeg').onclick = (e) => {
     const b = e.target.closest('button'); if(!b) return;
-    if (b.dataset.mode === 'admin') {
-      if (prompt("管理者密碼：") !== ADMIN_PASSWORD) { alert("密碼錯誤"); return; }
-    }
+    if (b.dataset.mode === 'admin' && prompt("管理者密碼：") !== ADMIN_PASSWORD) return;
     mode = b.dataset.mode;
     document.querySelectorAll('.mode-btn').forEach(x => x.classList.toggle('active', x===b));
     document.getElementById('adminControls').style.display = mode === 'admin' ? 'flex' : 'none';
@@ -565,22 +571,10 @@
   };
 
   document.addEventListener('DOMContentLoaded', () => {
-    quill = new Quill('#editor-container', { 
-      theme: 'snow', 
-      modules: { 
-        toolbar: [
-          [{ 'size': ['small', false, 'large', 'huge'] }],
-          ['bold', 'underline', 'link'], 
-          [{ 'color': [] }, { 'background': [] }], 
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }], 
-          ['clean'] 
-        ] 
-      } 
-    });
+    quill = new Quill('#editor-container', { theme: 'snow', modules: { toolbar: [[{ 'size': ['small', false, 'large', 'huge'] }], ['bold', 'underline', 'link'], [{ 'color': [] }, { 'background': [] }], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['clean']] } });
     document.getElementById('monthPick').value = new Date().toISOString().slice(0, 7);
     load();
   });
-
   document.getElementById('q').oninput = render;
   document.getElementById('monthPick').onchange = render;
   document.getElementById('scope').onchange = render;
