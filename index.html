@@ -389,7 +389,7 @@
 <script>
   // 請確認 API_URL 是最新的
   const API_URL = "https://script.google.com/macros/s/AKfycbznmfZ1quMslZxY6dftt_83uYqUGTh9THmoIO4LdFx7O9CPl0eKn2vvLP0YqM9nv2jf/exec?token=otsukakh5501398";
-  const ADMIN_PASSWORD = "admin5501398";
+  const ADMIN_PASSWORD = "admin16088678";
   const VERSION_ID = "SYSTEM_LOG_v6"; 
 
   let records = [], mode = "user", editingId = null, quill, modalTarget = null, editingYMList = [];
@@ -701,21 +701,30 @@ data-tooltip="${noteTooltip}"
     return out;
   }
 
-  // 季維護：固定季度月份（3/6/9/12），取維護期間涵蓋到的季度月份（含起月/訖月所在月份）
-  function buildQuarterYMsByRange_(startDate, endDate) {
-    const sy = startDate.getFullYear(), sm = startDate.getMonth();
-    const ey = endDate.getFullYear(), em = endDate.getMonth();
-    const startIdx = sy*12 + sm;
-    const endIdx = ey*12 + em;
-    if (startIdx > endIdx) return [];
-    const out = [];
-    for (let idx = startIdx; idx <= endIdx; idx++) {
-      const y = Math.floor(idx/12);
-      const m0 = idx % 12; // 0~11
-      if (m0 === 2 || m0 === 5 || m0 === 8 || m0 === 11) out.push(ymFromYearMonth_(y, m0));
-    }
-    return out;
+ // 季維護：以「開始月份 +2」為第一個維護月，之後每 +3 個月一次，直到涵蓋訖月
+　function buildQuarterYMsByRange_(startDate, endDate) {
+　  const sy = startDate.getFullYear(), sm = startDate.getMonth();
+　  const ey = endDate.getFullYear(), em = endDate.getMonth();
+　  const startIdx = sy * 12 + sm;
+　  const endIdx = ey * 12 + em;
+　  if (startIdx > endIdx) return [];
+
+ 　 const out = [];
+
+  // 第一個季維護月：開始月份 +2
+　  let idx = startIdx + 2;
+
+  // 如果第一個季維護月已經超過維護訖月，則本期間不會有季維護月
+  while (idx <= endIdx) {
+    const y = Math.floor(idx / 12);
+    const m0 = idx % 12;
+    out.push(ymFromYearMonth_(y, m0));
+    idx += 3;
   }
+
+  return out;
+}
+
 
   // 互斥：checkbox 行為像 radio
   function setCycleUI_(type) {
