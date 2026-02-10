@@ -342,11 +342,21 @@
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-              <div><label style="font-size:0.85rem;">維護起日</label><input type="date" id="startDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);" onchange="handleDateChange()"></div>
-              <div><label style="font-size:0.85rem;">維護訖日</label><input type="date" id="endDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
+              <div><label style="font-size:0.85rem;">維護起日</label><input type="date" id="startDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);" onchange="handleDateChange('start')"></div>
+              <div><label style="font-size:0.85rem;">維護訖日</label><input type="date" id="endDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);" onchange="handleDateChange('end')"></div>
             </div>
             <div class="ym-manager">
-              <label style="font-size:0.85rem; font-weight:600;">維護月份管理 (起月+3起算)</label>
+              <label style="font-size:0.85rem; font-weight:600;">維護月份管理（季維護：3/6/9/12；月維護：每月）</label>
+              <div style="display:flex; gap:14px; margin-top:8px; align-items:center;">
+                <label style="display:flex; gap:6px; align-items:center; font-size:0.85rem; color:var(--text-soft);">
+                  <input type="checkbox" id="cycleQuarter" checked onchange="onCycleToggle('quarter')">
+                  季維護
+                </label>
+                <label style="display:flex; gap:6px; align-items:center; font-size:0.85rem; color:var(--text-soft);">
+                  <input type="checkbox" id="cycleMonth" onchange="onCycleToggle('month')">
+                  月維護
+                </label>
+              </div>
               <div style="display:flex; gap:5px; margin-top:5px;">
                 <input type="month" id="manualYM" class="btn btn-outline" style="flex:1">
                 <button type="button" class="btn btn-outline" onclick="addYM()">手動新增</button>
@@ -383,6 +393,7 @@
   const VERSION_ID = "SYSTEM_LOG_v6"; 
 
   let records = [], mode = "user", editingId = null, quill, modalTarget = null, editingYMList = [];
+  let endDateManual = false; // true: 使用者已手動調整維護訖日（避免起日變動時自動覆蓋）
   let systemLogs = []; 
   let editingLogVersion = null; 
 
@@ -665,18 +676,117 @@ data-tooltip="${noteTooltip}"
     }
   }
 
-  function handleDateChange() {
+  // === 維護月份：季維護 / 月維護（依維護期間） ===
+  function pad2_(n){ return String(n).padStart(2,'0'); }
+
+  // 安全的本地年月字串（避免 toISOString 造成月份偏移）
+  function ymFromYearMonth_(y, m0){ return `${y}-${pad2_(m0+1)}`; }
+
+  // 安全的本地日期字串（YYYY-MM-DD）
+  function dateToYMD_(d){ return `${d.getFullYear()}-${pad2_(d.getMonth()+1)}-${pad2_(d.getDate())}`; }
+
+  // 回傳：維護期間涵蓋到的每個月（含起月、含訖月）
+  function buildMonthlyYMsByRange_(startDate, endDate) {
+    const sy = startDate.getFullYear(), sm = startDate.getMonth();
+    const ey = endDate.getFullYear(), em = endDate.getMonth();
+    const startIdx = sy*12 + sm;
+    const endIdx = ey*12 + em;
+    if (startIdx > endIdx) return [];
+    const out = [];
+    for (let idx = startIdx; idx <= endIdx; idx++) {
+      const y = Math.floor(idx/12);
+      const m0 = idx % 12;
+      out.push(ymFromYearMonth_(y, m0));
+    }
+    return out;
+  }
+
+  // 季維護：固定季度月份（3/6/9/12），取維護期間涵蓋到的季度月份（含起月/訖月所在月份）
+  function buildQuarterYMsByRange_(startDate, endDate) {
+    const sy = startDate.getFullYear(), sm = startDate.getMonth();
+    const ey = endDate.getFullYear(), em = endDate.getMonth();
+    const startIdx = sy*12 + sm;
+    const endIdx = ey*12 + em;
+    if (startIdx > endIdx) return [];
+    const out = [];
+    for (let idx = startIdx; idx <= endIdx; idx++) {
+      const y = Math.floor(idx/12);
+      const m0 = idx % 12; // 0~11
+      if (m0 === 2 || m0 === 5 || m0 === 8 || m0 === 11) out.push(ymFromYearMonth_(y, m0));
+    }
+    return out;
+  }
+
+  // 互斥：checkbox 行為像 radio
+  function setCycleUI_(type) {
+    const q = document.getElementById('cycleQuarter');
+    const m = document.getElementById('cycleMonth');
+    if (!q || !m) return;
+    if (type === 'month') { m.checked = true; q.checked = false; }
+    else { q.checked = true; m.checked = false; }
+  }
+
+
+  // 判斷既有月份清單是否為「每月連續」
+  function isConsecutiveMonthly_(ymList) {
+    if (!ymList || ymList.length < 2) return false;
+    const dates = ymList.map(ym => new Date(ym + "-01")).sort((a,b) => a - b);
+    for (let i = 1; i < dates.length; i++) {
+      const prev = dates[i - 1];
+      const cur = dates[i];
+      const expected = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
+      if (expected.getTime() !== cur.getTime()) return false;
+    }
+    return true;
+  }
+
+  function computeYMListByCycle_(startDate, endDate) {
+    const isMonthly = document.getElementById('cycleMonth')?.checked;
+    return isMonthly ? buildMonthlyYMsByRange_(startDate, endDate) : buildQuarterYMsByRange_(startDate, endDate);
+  }
+
+  // source: 'start' | 'end' | undefined
+  function handleDateChange(source) {
     const startVal = document.getElementById('startDate').value;
     if(!startVal) return;
+
+    // 起日變更：若訖日未手動調整，維持原本「預設 1 年期」自動帶入
+    if (source === 'start') endDateManual = false;
+    if (source === 'end') endDateManual = true;
+
     const startDate = new Date(startVal);
-    const endDate = new Date(startVal);
-    endDate.setFullYear(startDate.getFullYear() + 1);
-    endDate.setDate(endDate.getDate() - 1);
-    document.getElementById('endDate').value = endDate.toISOString().slice(0, 10);
-    editingYMList = [3, 6, 9, 12].map(offset => {
-      const d = new Date(startDate.getFullYear(), startDate.getMonth() + offset, 1);
-      return d.toISOString().slice(0, 7);
-    });
+
+    let endVal = document.getElementById('endDate').value;
+    if (!endVal || !endDateManual) {
+      const endDateAuto = new Date(startVal);
+      endDateAuto.setFullYear(startDate.getFullYear() + 1);
+      endDateAuto.setDate(endDateAuto.getDate() - 1);
+      document.getElementById('endDate').value = dateToYMD_(endDateAuto);
+      endVal = document.getElementById('endDate').value;
+    }
+
+    if (!endVal) return;
+    const endDate = new Date(endVal);
+
+    editingYMList = computeYMListByCycle_(startDate, endDate);
+    renderYMList();
+  }
+
+  function onCycleToggle(type) {
+    setCycleUI_(type);
+
+    const startVal = document.getElementById('startDate').value;
+    const endVal = document.getElementById('endDate').value;
+    if (!startVal || !endVal) {
+      alert("請先選擇「維護起日」與「維護訖日」後，再切換季維護 / 月維護。");
+      setCycleUI_('quarter');
+      return;
+    }
+
+    const startDate = new Date(startVal);
+    const endDate = new Date(endVal);
+
+    editingYMList = computeYMListByCycle_(startDate, endDate);
     renderYMList();
   }
 
@@ -724,7 +834,14 @@ data-tooltip="${noteTooltip}"
     document.getElementById('engineer').value = r.engineer || "";
     document.getElementById('startDate').value = r.startDate || "";
     document.getElementById('endDate').value = r.endDate || "";
+    endDateManual = !!r.endDate; // 編輯既有資料時，視為已手動設定訖日（避免起日變更覆蓋）
+
     editingYMList = (r.schedule || []).map(s => s.ym);
+
+    // 依既有月份清單自動判斷季/月維護（沒有清單時預設季維護）
+    if (editingYMList.length > 0 && isConsecutiveMonthly_(editingYMList)) setCycleUI_('month');
+    else setCycleUI_('quarter');
+
     renderYMList();
     document.getElementById('drawer').classList.add('open');
     document.getElementById('overlay').style.display = 'block';
