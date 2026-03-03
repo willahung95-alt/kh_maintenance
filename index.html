@@ -567,12 +567,11 @@
     const filtered = records.filter(r => {
       const match = !q || r.customer.toLowerCase().includes(q) || (r.salesName||"").toLowerCase().includes(q) || (r.engineer||"").toLowerCase().includes(q) || r.product.toLowerCase().includes(q);
       const hasSch = (r.schedule || []).some(s => s.ym === ym);
-      return (scope === 'need' ? hasSch : true) && match;
-    }).sort((a,b) => a.customer.localeCompare(b.customer, 'zh-Hant'));
+      return (scope === 'need' ? hasSch : true) && match; }).sort((a,b) => a.customer.localeCompare(b.customer, 'zh-Hant'));
 
     document.getElementById('statTotal').textContent = records.length;
-    const doneCount = records.filter(r => r.schedule?.some(s => s.ym === ym && (s.isDone || s.ym < currentYM))).length;
-    const todoCount = records.filter(r => r.schedule?.some(s => s.ym === ym && (!s.isDone && s.ym >= currentYM))).length;
+    const doneCount = records.filter(r => r.schedule?.some(s => s.ym === ym && s.isDone)).length;
+    const todoCount = records.filter(r => r.schedule?.some(s => s.ym === ym && !s.isDone)).length;
     document.getElementById('statDone').textContent = doneCount;
     document.getElementById('statTodo').textContent = todoCount;
     document.getElementById('statRate').textContent = (doneCount + todoCount) > 0 ? Math.round((doneCount / (doneCount + todoCount)) * 100) + "%" : "0%";
@@ -602,21 +601,31 @@
             <div class="month-group">
               ${(r.schedule || []).map(s => {
                 const isPast = s.ym < currentYM;
-                return `<span class="month-chip ${(s.isDone || isPast) ? 'is-done' : ''} ${s.ym === ym ? 'active' : ''}">${parseInt(s.ym.slice(5))}月</span>`;
+                return `<span class="month-chip ${s.isDone ? 'is-done' : ''} ${s.ym === ym ? 'active' : ''}">${parseInt(s.ym.slice(5))}月</span>`;
               }).join('')}
             </div>
           </td>
-          <td>
-            ${sch ? ((sch.isDone || sch.ym < currentYM) ? `
-              <div class="done-status-box">
-                <div class="status-title"><span class="material-symbols-rounded" style="font-size:18px;">check_circle</span>完工</div>
-                <div class="status-meta">${sch.doneDate || '系統'}<br>${sch.engName || 'Auto'}</div>
-              </div>
-            ` : `<span style="color:var(--warning); font-weight:700; display:flex; align-items:center; gap:4px;"><span class="material-symbols-rounded" style="font-size:16px;">pending</span>待維護</span>`) : '--'}
-          </td>
+<td>
+  ${sch ? (
+    sch.isDone ? `
+      <div class="done-status-box">
+        <div class="status-title"><span class="material-symbols-rounded" style="font-size:18px;">check_circle</span>完工</div>
+        <div class="status-meta">${sch.doneDate || '系統'}<br>${sch.engName || '-'}</div>
+      </div>
+    ` : (sch.ym < currentYM ? `
+      <span style="color:var(--danger); font-weight:800; display:flex; align-items:center; gap:4px;">
+        <span class="material-symbols-rounded" style="font-size:16px;">error</span>逾期待維護
+      </span>
+    ` : `
+      <span style="color:var(--warning); font-weight:700; display:flex; align-items:center; gap:4px;">
+        <span class="material-symbols-rounded" style="font-size:16px;">pending</span>待維護
+      </span>
+    `)
+  ) : '--'}
+</td>
           <td>
             <div style="display:flex; gap:6px; justify-content: flex-end;">
-              ${sch ? `<button class="btn btn-outline" type="button" style="padding:4px" onclick="toggleDone('${r.id}','${ym}')"><span class="material-symbols-rounded" style="font-size:18px;">${(sch.isDone || sch.ym < currentYM)?'history':'done'}</span></button>` : ''}
+             ${sch ? `<button class="btn btn-outline" type="button" style="padding:4px" onclick="toggleDone('${r.id}','${ym}')"><span class="material-symbols-rounded" style="font-size:18px;">${sch.isDone ? 'history' : 'done'}</span></button>` : ''}
               ${mode === 'admin' && (isSuper_() || (isSalesAdmin_() && canManageRecord_(r))) ? `<button class="btn btn-outline" type="button" style="padding:4px" onclick="openEdit('${r.id}')"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>` : ''}
             </div>
           </td>
@@ -912,8 +921,7 @@
         const old = (records.find(x => x.id === editingId)?.schedule || []).find(s => s.ym === ym);
         if (old) return old;
         const currentYM = new Date().toISOString().slice(0, 7);
-        const isPast = ym < currentYM;
-        return { ym, isDone: isPast, doneDate: isPast ? currentYM : "", engName: isPast ? "Auto" : "" };
+        return { ym, isDone: false, doneDate: "", engName: "" };
       })
     };
     
@@ -930,22 +938,22 @@
   async function toggleDone(id, ym) {
     const r = records.find(x => x.id === id);
     const sch = r.schedule.find(s => s.ym === ym);
-    const currentYM = new Date().toISOString().slice(0, 7);
-    if(sch.isDone || sch.ym < currentYM) {
-      if(confirm("確定取消完工？")) { 
-        const payload = {
-            action: "updateSchedule",
-            role: adminRole, user: getActorName_() || "", id: id, ym: ym,
-            isCancel: true // 標記為取消完工
-        };
-        await sendPayload(payload, null, null);
-      }
-    } else {
-      modalTarget = { id, ym };
-      document.getElementById('mDoneDate').value = new Date().toISOString().slice(0,10);
-      document.getElementById('doneModal').style.display = 'block';
-      document.getElementById('overlay').style.display = 'block';
-    }
+const currentYM = new Date().toISOString().slice(0, 7);
+if (sch.isDone) {
+  if(confirm("確定取消完工？")) { 
+    const payload = {
+        action: "updateSchedule",
+        role: adminRole, user: getActorName_() || "", id: id, ym: ym,
+        isCancel: true // 標記為取消完工
+    };
+    await sendPayload(payload, null, null);
+  }
+} else {
+  modalTarget = { id, ym };
+  document.getElementById('mDoneDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('doneModal').style.display = 'block';
+  document.getElementById('overlay').style.display = 'block';
+}
   }
 
   function closeDrawer() {
